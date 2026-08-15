@@ -1,0 +1,9 @@
+# Success criteria — Phase B TARGETS (project book §Metrics). Not results.
+bertscore_f1: 0.80
+rouge_l: 0.55
+bleu: 0.40
+car_percent: 70
+irr_fleiss_kappa: 0.75
+ngs: 0.30
+generation_latency_seconds_p95: 15   # NFR2
+uptime_percent: 99.5                 # NFR6

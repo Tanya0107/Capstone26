@@ -1,0 +1,56 @@
+{
+  "reference_metadata": {
+    "unit_id": "",
+    "brief_file": "",
+    "subject": "",
+    "subject_type": "",
+    "content_source": "",
+    "adapted_by": "",
+    "llm_involvement": "none",
+    "validated_by": "",
+    "validation_rubric": "",
+    "validation_date": null,
+    "status": "DRAFT, not valid for metric runs until validated_by and validation_date are filled"
+  },
+  "title": "",
+  "subject": "",
+  "grade_level": "",
+  "difficulty_level": 3,
+  "weekly_sequence": [
+    ""
+  ],
+  "lessons": [
+    {
+      "title": "",
+      "objectives": [
+        ""
+      ],
+      "hook": "",
+      "exercises": [
+        {
+          "order": 1,
+          "prompt": "",
+          "correct_answer": "",
+          "scaffold_steps": [
+            ""
+          ],
+          "socratic_hints": [
+            {
+              "hint_order": 1,
+              "hint_text": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "assessment": {
+    "rubric": "",
+    "diagnostics": [
+      ""
+    ],
+    "exit_tickets": [
+      ""
+    ]
+  }
+}

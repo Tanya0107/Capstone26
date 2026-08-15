@@ -1,0 +1,8 @@
+{
+  "corpus": "il_moe",
+  "subject": "science",
+  "version": "0.1.0",
+  "language": "he",
+  "source_note": "Mixed subject sample for D9 stratified evaluation. Curate from official MOE curriculum documents.",
+  "standards": []
+}

@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Phase 4: design tokens (colors, type scale) live here as CSS variables. */

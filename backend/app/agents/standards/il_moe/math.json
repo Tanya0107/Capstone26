@@ -1,0 +1,16 @@
+{
+  "corpus": "il_moe",
+  "subject": "math",
+  "version": "0.1.0",
+  "language": "he",
+  "source_note": "Curate from official MOE curriculum documents. Placeholder entry defines the shape only.",
+  "standards": [
+    {
+      "id": "IL-MOE-MATH-G5-NUM-01",
+      "grade": "5",
+      "domain": "numbers_and_operations",
+      "text_he": "TODO: paste the official standard text in Hebrew",
+      "source": "TODO: document name, year, section"
+    }
+  ]
+}

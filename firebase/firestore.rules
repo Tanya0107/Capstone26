@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers (NFR4: Role-Based Access Control) ----
+    function isSignedIn() { return request.auth != null; }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function isTeacher() { return isSignedIn() && userDoc().data.role == "teacher"; }
+    function isStudent() { return isSignedIn() && userDoc().data.role == "student"; }
+    function sameSchool(schoolKey) { return userDoc().data.schoolKey == schoolKey; }
+
+    // ---- Central Content Bank ----
+    match /schools/{schoolId} {
+      allow read: if isSignedIn() && sameSchool(schoolId);
+      allow write: if false; // provisioned by admin script only
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isTeacher());
+      allow write: if false; // provisioned by admin script / Cloud Function only
+    }
+
+    match /curriculumModules/{moduleId} {
+      // Teachers manage their own modules (FR5); students read published assigned ones
+      allow read: if isTeacher() || isStudent(); // TODO: tighten student read to assigned modules only
+      allow create, update, delete: if isTeacher()
+        && request.resource.data.creatorTeacherKey == request.auth.uid;
+    }
+
+    match /exercises/{exerciseId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isTeacher();
+      // NOTE (FR11): correctAnswer + socraticHints must NOT reach the student
+      // client. TODO Phase 2: split into a teacher-only doc or serve hints
+      // exclusively through the backend tutor endpoint.
+    }
+
+    // ---- Distribution & Progress Bank ----
+    match /assignments/{assignmentId} {
+      allow read: if isTeacher()
+        || (isStudent() && request.auth.uid in resource.data.assignedTo);
+      allow create, update: if isTeacher();
+      allow delete: if false;
+    }
+
+    match /studentProgress/{progressId} {
+      allow read: if isTeacher() || (isStudent() && resource.data.studentKey == request.auth.uid);
+      allow create, update: if isStudent() && request.resource.data.studentKey == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // ---- Logs & Analytics Bank (NFR5: no PII in telemetry payloads) ----
+    match /telemetryEvents/{eventId} {
+      allow read: if isTeacher();
+      allow create: if isStudent() && request.resource.data.studentKey == request.auth.uid;
+      allow update, delete: if false; // append-only log
+    }
+
+    match /feedbackMemoryBank/{memoryId} {
+      allow read, write: if false; // backend (Admin SDK) only
+    }
+  }
+}

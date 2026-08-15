@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+# Node
+node_modules/
+.next/
+out/
+# Env & secrets
+.env
+.env.local
+*.local
+serviceAccountKey.json
+firebase-debug.log
+firestore-debug.log
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+# Evaluation artifacts
+evaluation/results/

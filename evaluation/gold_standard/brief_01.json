@@ -1,0 +1,10 @@
+{
+  "teacher_key": "REFERENCE",
+  "school_key": "REFERENCE",
+  "subject": "math",
+  "goals": "העמקת הבנת שברים דרך בעיות מהחיים: בישול, חלוקה הוגנת וקנה מידה. דגש על גילוי עצמי ויצירתיות ולא על תרגול טכני",
+  "topics": ["שברים", "שברים שקולים", "השוואת שברים"],
+  "grade_level": "5",
+  "difficulty_level": 3,
+  "standards_hint": null
+}
