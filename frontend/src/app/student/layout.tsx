@@ -1,4 +1,10 @@
+/** Student shell: route guard now (NFR4), nav lands in Phase 4, Step 4.1. */
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
+
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
-  // TODO Phase 4: wrap with <ProtectedRoute role="student">
-  return <section>{children}</section>;
+  return (
+    <ProtectedRoute role="student">
+      <section>{children}</section>
+    </ProtectedRoute>
+  );
 }

@@ -1,5 +1,10 @@
-/** Teacher shell: nav (Create / Review / Analytics) + route guard (NFR4). */
+/** Teacher shell: route guard now (NFR4), nav lands in Phase 4, Step 4.1. */
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
+
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
-  // TODO Phase 4: wrap with <ProtectedRoute role="teacher">
-  return <section>{children}</section>;
+  return (
+    <ProtectedRoute role="teacher">
+      <section>{children}</section>
+    </ProtectedRoute>
+  );
 }

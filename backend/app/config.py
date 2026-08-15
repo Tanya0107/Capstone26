@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     firebase_project_id: str = ""
     use_firestore_emulator: bool = True
     firestore_emulator_host: str = "localhost:8080"
+    firebase_auth_emulator_host: str = "localhost:9099"
 
     # NFR2 budget: generation plus scoring plus self correction within 15s
     generation_timeout_seconds: int = 15
