@@ -23,6 +23,27 @@ jobs:
       - name: Run tests
         run: pytest
 
+  rules:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firebase
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install dependencies
+        run: npm ci
+      - name: Run rules tests in the emulator
+        run: npx firebase emulators:exec --only firestore --project demo-enrichment "npm test"
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
