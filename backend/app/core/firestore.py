@@ -1,8 +1,8 @@
 """Firebase Admin SDK client + typed repository helpers.
 
 The backend is the ONLY writer of feedbackMemoryBank and the only component
-allowed to read exercises' correctAnswer/socraticHints on behalf of students
-(FR11 — hints are served, answers are never exposed).
+allowed to read exerciseSolutions on behalf of students (FR11, R6, D11).
+All docs are stored camelCase to match models.ts and the security rules.
 """
 from __future__ import annotations
 
@@ -10,49 +10,149 @@ import os
 from functools import lru_cache
 
 import firebase_admin
+import google.auth.credentials
 from firebase_admin import credentials, firestore
+from google.cloud import firestore as google_firestore
 
 from app.config import get_settings
+from app.core.schemas import (
+    CurriculumModule,
+    CurriculumPackage,
+    ExerciseSolution,
+    FeedbackMemoryRecord,
+    TelemetryEvent,
+)
 
 
 @lru_cache
-def get_db() -> firestore.Client:
+def get_db() -> google_firestore.Client:
     settings = get_settings()
+    project_id = settings.firebase_project_id or "demo-project"
     if settings.use_firestore_emulator:
+        # The Admin SDK insists on real credentials even against the
+        # emulator, so build the underlying client with anonymous ones.
         os.environ.setdefault("FIRESTORE_EMULATOR_HOST", settings.firestore_emulator_host)
+        return google_firestore.Client(
+            project=project_id,
+            credentials=google.auth.credentials.AnonymousCredentials(),
+        )
     if not firebase_admin._apps:
-        # Emulator mode does not require real credentials
-        cred = credentials.ApplicationDefault() if not settings.use_firestore_emulator else None
-        firebase_admin.initialize_app(cred, {"projectId": settings.firebase_project_id or "demo-project"})
+        firebase_admin.initialize_app(
+            credentials.ApplicationDefault(), {"projectId": project_id}
+        )
     return firestore.client()
 
 
-# ---- Repository sketches (implement in Phase 2, Step 2.3) ----
+def save_curriculum_package(package: CurriculumPackage, teacher_key: str) -> str:
+    """Persist a CurriculumPackage into curriculumModules + exercises +
+    exerciseSolutions in one batched write (Fig 4, D11). Returns the new
+    moduleKey and fills module_key and exercise_id fields on the package.
 
-def save_curriculum_package(package) -> str:
-    """Persist a CurriculumPackage into curriculumModules + exercises (Fig 4).
-
-    Returns the new moduleKey. Exercises are decoupled docs linked by moduleKey
-    to avoid document-size bottlenecks (book: Fig 4, Content Bank).
+    Exercises are decoupled docs linked by moduleKey to avoid document size
+    bottlenecks. Answer fields go only to exerciseSolutions. The module doc
+    keeps lesson metadata with exerciseKeys so the teacher Review Dashboard
+    can reassemble the full package from its readable collections.
     """
-    raise NotImplementedError
+    db = get_db()
+    batch = db.batch()
+    module_ref = db.collection("curriculumModules").document()
+
+    lessons_meta = []
+    for lesson in package.lessons:
+        exercise_keys = []
+        for exercise in lesson.exercises:
+            exercise_ref = db.collection("exercises").document()
+            solution_ref = db.collection("exerciseSolutions").document(exercise_ref.id)
+            exercise.exercise_id = exercise_ref.id
+            exercise.module_key = module_ref.id
+            batch.set(exercise_ref, {
+                "moduleKey": module_ref.id,
+                "order": exercise.order,
+                "prompt": exercise.prompt,
+                "scaffoldSteps": exercise.scaffold_steps,
+                "assignedStudentKeys": [],
+            })
+            solution = ExerciseSolution(
+                solution_id=exercise_ref.id,
+                exercise_key=exercise_ref.id,
+                module_key=module_ref.id,
+                correct_answer=exercise.correct_answer,
+                socratic_hints=exercise.socratic_hints,
+            )
+            batch.set(solution_ref, solution.model_dump(by_alias=True, exclude={"solution_id"}))
+            exercise_keys.append(exercise_ref.id)
+        lessons_meta.append({
+            "title": lesson.title,
+            "objectives": lesson.objectives,
+            "hook": lesson.hook,
+            "exerciseKeys": exercise_keys,
+        })
+
+    module = CurriculumModule(
+        module_id=module_ref.id,
+        title=package.title,
+        subject=package.subject,
+        grade_level=package.grade_level,
+        difficulty_level=package.difficulty_level,
+        creator_teacher_key=teacher_key,
+    )
+    module_doc = module.model_dump(by_alias=True, exclude={"module_id", "created_at"})
+    module_doc.update({
+        "createdAt": firestore.SERVER_TIMESTAMP,
+        "weeklySequence": package.weekly_sequence,
+        "lessons": lessons_meta,
+        "assessment": package.assessment.model_dump(by_alias=True),
+        "criticReport": package.critic_report.model_dump(by_alias=True),
+        "qualityScores": package.quality_scores.model_dump(by_alias=True),
+        "generationLatencySeconds": package.generation_latency_seconds,
+    })
+    batch.set(module_ref, module_doc)
+    batch.commit()
+
+    package.module_key = module_ref.id
+    return module_ref.id
 
 
-def append_telemetry_event(event) -> None:
-    """Append-only write into telemetryEvents (NFR5: keys only, no PII)."""
-    raise NotImplementedError
+def append_telemetry_event(event: TelemetryEvent) -> None:
+    """Append only write into telemetryEvents (NFR5, keys only, no PII)."""
+    db = get_db()
+    ref = db.collection("telemetryEvents").document()
+    doc = event.model_dump(by_alias=True, exclude={"event_id", "timestamp"})
+    doc["timestamp"] = event.timestamp or firestore.SERVER_TIMESTAMP
+    ref.set(doc)
 
 
-def save_feedback_memory(record) -> str:
-    raise NotImplementedError
+def save_feedback_memory(record: FeedbackMemoryRecord) -> str:
+    """Store one teacher edit memory (FR6). Returns the new memoryId.
+
+    adapted_context_vector is stored as a plain array for now. Step 3.4
+    converts it to a Firestore Vector value with a single field vector
+    index for find_nearest (D3).
+    """
+    db = get_db()
+    ref = db.collection("feedbackMemoryBank").document()
+    doc = record.model_dump(by_alias=True, exclude={"memory_id", "created_at"})
+    doc["createdAt"] = firestore.SERVER_TIMESTAMP
+    ref.set(doc)
+    return ref.id
 
 
 def fetch_similar_memories(vector: list[float], k: int = 5) -> list[dict]:
     """RAG retrieval for the Orchestrator (Fig 3, Memory Layer).
 
-    Decided (docs/DECISIONS.md D3): Firestore native vector search.
-    Implement with a Vector field on feedbackMemoryBank docs and
-    collection.find_nearest with COSINE distance. Requires a single field
-    vector index, added to firestore.indexes.json in Phase 3, Step 3.4.
+    Interim metadata query, most recent k memories. Step 3.4 replaces this
+    with collection.find_nearest using COSINE distance on the stored vector
+    (docs/DECISIONS.md D3).
     """
-    raise NotImplementedError
+    db = get_db()
+    query = (
+        db.collection("feedbackMemoryBank")
+        .order_by("createdAt", direction=firestore.Query.DESCENDING)
+        .limit(k)
+    )
+    results = []
+    for snap in query.stream():
+        doc = snap.to_dict()
+        doc["memoryId"] = snap.id
+        results.append(doc)
+    return results
