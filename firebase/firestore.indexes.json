@@ -9,6 +9,15 @@
       ]
     },
     {
+      "collectionGroup": "exercises",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignedStudentKeys", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "moduleKey", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "assignments",
       "queryScope": "COLLECTION",
       "fields": [

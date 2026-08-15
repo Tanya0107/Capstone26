@@ -14,6 +14,7 @@ def sample_request() -> GenerationRequest:
     return GenerationRequest(
         teacher_key="t_test",
         school_key="s_test",
+        subject="math",
         goals="Deepen fraction sense through real-world cooking problems",
         topics=["fractions", "ratios"],
         grade_level="5",

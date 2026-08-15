@@ -1,7 +1,13 @@
-"""Pydantic models — the single source of truth for the API contract (Phase 2).
+"""Pydantic models, the single source of truth for the API contract (Phase 2).
 
 These mirror the Firestore schema (book Fig 4) and the JSON curriculum format
 returned by POST /api/generation. Keep frontend/src/types/models.ts in sync.
+
+Answer protection (R6): persisted exercises are split into student safe
+exercise docs and teacher only exerciseSolutions docs. The pipeline level
+Exercise model below still carries the answer because it is produced by the
+generator and reviewed by the teacher. The split happens on persist in
+core/firestore.py. Design note in docs/API_CONTRACT.md.
 """
 from __future__ import annotations
 
@@ -24,11 +30,16 @@ class AssignmentStatus(str, Enum):
 
 
 class AffectiveState(str, Enum):
-    """FR12 — inferred (never measured biometrically) from ATT/TCV/HSR telemetry."""
+    """FR12, inferred (never measured biometrically) from ATT/TCV/HSR telemetry."""
     engaged = "engaged"
     frustrated = "frustrated"
     bored = "bored"
     unknown = "unknown"
+
+
+class ModuleStatus(str, Enum):
+    draft = "draft"
+    published = "published"
 
 
 # ------------------------------------------------- generation request (FR1)
@@ -47,10 +58,13 @@ class GenerationRequest(BaseModel):
 # ------------------------------------------------- curriculum content (Fig 4)
 class SocraticHint(BaseModel):
     hint_order: int = Field(..., ge=1)
-    hint_text: str = Field(..., description="Pedagogical scaffolding question — never the answer")
+    hint_text: str = Field(..., description="Pedagogical scaffolding question, never the answer")
 
 
 class Exercise(BaseModel):
+    """Pipeline output and teacher review view. Persisted split per R6:
+    prompt, order and scaffold_steps go to the exercises collection,
+    correct_answer and socratic_hints go to exerciseSolutions."""
     exercise_id: Optional[str] = None      # exerciseKey, assigned on persist
     module_key: Optional[str] = None
     order: int
@@ -60,6 +74,16 @@ class Exercise(BaseModel):
     correct_answer: str
     socratic_hints: list[SocraticHint] = Field(default_factory=list)
     scaffold_steps: list[str] = Field(default_factory=list, description="FR10 task breakdown")
+
+
+class ExerciseSolution(BaseModel):
+    """Teacher only Firestore doc holding the protected answer fields (R6).
+    Served to the Socratic tutor server side, never to the student client."""
+    solution_id: Optional[str] = None      # same id as the paired exercise doc
+    exercise_key: str
+    module_key: str
+    correct_answer: str
+    socratic_hints: list[SocraticHint] = Field(default_factory=list)
 
 
 class LessonUnit(BaseModel):
@@ -84,16 +108,16 @@ class CriticIssue(BaseModel):
 
 
 class CriticReport(BaseModel):
-    """Output of the Equity & Quality (Critic) Agent — FR3 agentic self-correction."""
+    """Output of the Equity and Quality (Critic) Agent, FR3 agentic self-correction."""
     approved: bool
     issues: list[CriticIssue] = Field(default_factory=list)
     regeneration_cycles_used: int = 0
 
 
 class QualityScores(BaseModel):
-    """FR4 — automated algorithmic scoring attached to every draft.
+    """FR4 automated algorithmic scoring attached to every draft.
 
-    NOTE: these are per-draft diagnostics; the Phase B thresholds
+    NOTE: these are per draft diagnostics. The Phase B thresholds
     (BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are
     TARGETS, not results.
     """
@@ -118,12 +142,17 @@ class CurriculumPackage(BaseModel):
 
 
 # ------------------------------------------------- tutoring (FR11, FR12)
+class ChatMessage(BaseModel):
+    role: Literal["student", "tutor"]
+    text: str
+
+
 class TutorTurnRequest(BaseModel):
     student_key: str
     assignment_key: str
     exercise_key: str
     student_message: str
-    conversation_history: list[dict] = Field(default_factory=list)
+    conversation_history: list[ChatMessage] = Field(default_factory=list)
     telemetry_snapshot: Optional["TelemetrySnapshot"] = None
 
 
@@ -162,7 +191,7 @@ class FeedbackMemoryRecord(BaseModel):
 
 # ------------------------------------------------- telemetry (Fig 4, Logs Bank)
 class TelemetryEvent(BaseModel):
-    """NFR5: contains keys only — never names/emails/PII."""
+    """NFR5: contains keys only, never names, emails or PII."""
     event_id: Optional[str] = None
     student_key: str
     exercise_key: str
@@ -170,3 +199,53 @@ class TelemetryEvent(BaseModel):
     att_seconds: float
     hsrc_count: int = 0          # Help-Seeking Request count for this exercise
     timestamp: Optional[datetime] = None
+
+
+# ------------------------------------------------- Firestore docs (Fig 4)
+# Mirrors of the stored document shapes used by core/firestore.py repos.
+# assigned_student_keys on module and exercise docs is denormalized at
+# publish time so security rules can gate student reads and queries.
+class School(BaseModel):
+    school_id: Optional[str] = None
+    school_name: str
+    location: str = ""
+    created_at: Optional[datetime] = None
+
+
+class UserDoc(BaseModel):
+    user_id: Optional[str] = None
+    name: str
+    avatar: str = ""
+    role: Role
+    school_key: str
+
+
+class CurriculumModule(BaseModel):
+    module_id: Optional[str] = None
+    title: str
+    subject: str
+    grade_level: str
+    difficulty_level: int = Field(..., ge=1, le=5)
+    creator_teacher_key: str
+    status: ModuleStatus = ModuleStatus.draft
+    assigned_student_keys: list[str] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+
+
+class Assignment(BaseModel):
+    assignment_id: Optional[str] = None
+    module_key: str
+    teacher_key: str
+    assigned_to: list[str] = Field(default_factory=list)
+    status: AssignmentStatus = AssignmentStatus.active
+    published_at: Optional[datetime] = None
+
+
+class StudentProgress(BaseModel):
+    progress_id: Optional[str] = None
+    assignment_key: str
+    student_key: str
+    current_exercise_order: int = 0
+    is_completed: bool = False
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
