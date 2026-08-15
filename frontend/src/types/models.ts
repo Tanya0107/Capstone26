@@ -89,7 +89,27 @@ export interface StudentProgress {
   completedAt?: string;
 }
 
+// ---------- Analytics (FR8, FR13) ----------
+export interface StudentAnalyticsRow {
+  studentKey: string;
+  attSeconds?: number;
+  tcvSeconds?: number;
+  hsr?: number;
+  ngs?: number;
+  completed: boolean;
+}
+
+export interface AssignmentAnalytics {
+  assignmentKey: string;
+  students: StudentAnalyticsRow[];
+}
+
 // ---------- Feedback Memory Bank (FR6) ----------
+export interface FeedbackIngestResponse {
+  semanticDistance: number;
+  stored: boolean;
+}
+
 export interface TeacherEditRecord {
   teacherKey: string;
   moduleKey: string;

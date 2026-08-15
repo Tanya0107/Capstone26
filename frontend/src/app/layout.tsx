@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "פלטפורמת העשרה במתמטיקה",
-  description: "AI assisted math enrichment programs. Braude capstone 26-2-D-7",
+  title: "פלטפורמת העשרה",
+  description: "AI assisted enrichment programs. Braude capstone 26-2-D-7",
 };
 
 // UI language is Hebrew with RTL layout (docs/DECISIONS.md D5).

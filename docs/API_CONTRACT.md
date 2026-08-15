@@ -18,6 +18,27 @@ Errors: 401 no/invalid token · 403 wrong role · 422 schema violation ·
 Full machine-readable spec: FastAPI auto-generates /docs (Swagger) and
 /openapi.json — export a frozen copy here at the end of Phase 2.
 
+## Phase 2 freeze summary (Step 2.5)
+
+Frozen spec: `docs/openapi.phase2.json`, guarded by the schema snapshot test
+in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
+
+- Wire format is camelCase end to end: every Pydantic model inherits
+  `ApiModel` (alias generator `to_camel`), matching `models.ts` exactly.
+  Requests are accepted in camelCase (snake_case also tolerated), responses
+  are serialized camelCase.
+- `POST /api/feedback/edits` now returns a typed `FeedbackIngestResponse`
+  (`{semanticDistance, stored}`).
+- `GET /api/analytics/assignment/{key}` now returns a typed
+  `AssignmentAnalytics` (`{assignmentKey, students: StudentAnalyticsRow[]}`);
+  aggregation itself lands in Phase 5, Step 5.2.
+- `TutorTurnRequest.conversationHistory` is a typed `ChatMessage[]` and
+  carries an optional `telemetrySnapshot` (FR12 input).
+- Contract mirrors added on the TS side: `TelemetrySnapshot`,
+  `TeacherEditRecord`, `FeedbackMemoryRecord`, `ExerciseSolution`,
+  `ChatMessage`, analytics models; `assignedStudentKeys` on modules and
+  exercises (D11).
+
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
 The book's Fig 4 stores `correctAnswer` and `socraticHints` on the exercise

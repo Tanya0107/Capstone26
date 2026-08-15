@@ -60,14 +60,34 @@ async def test_missing_token_unauthorized():
     assert bad_scheme.status_code == 401
 
 
-@pytest.mark.skip(reason="Implement in Phase 2, Step 2.5")
-def test_invalid_payload_422():
-    ...
+async def test_invalid_payload_422():
+    """Case 2: schema violations are rejected before any pipeline work."""
+    app.dependency_overrides[deps.verify_token] = override_role("teacher")
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            missing_subject = {k: v for k, v in VALID_PAYLOAD.items() if k != "subject"}
+            out_of_range = {**VALID_PAYLOAD, "difficultyLevel": 9}
+            wrong_type = {**VALID_PAYLOAD, "topics": "not-a-list"}
+            for payload in (missing_subject, out_of_range, wrong_type):
+                response = await client.post("/api/generation", json=payload)
+                assert response.status_code == 422, payload
+    finally:
+        app.dependency_overrides.clear()
 
 
-@pytest.mark.skip(reason="Implement in Phase 2, Step 2.5")
 def test_response_schema_snapshot():
-    ...
+    """Case 5: the served OpenAPI spec must match the frozen Phase 2 export.
+
+    On intentional contract changes re-export docs/openapi.phase2.json,
+    mirror models.ts and update docs/API_CONTRACT.md in the same commit (R5).
+    """
+    import json
+    from pathlib import Path
+
+    frozen_path = Path(__file__).resolve().parents[3] / "docs" / "openapi.phase2.json"
+    frozen = json.loads(frozen_path.read_text())
+    assert app.openapi() == frozen
 
 
 @pytest.mark.skip(reason="Implement in Phase 3, Step 3.6")

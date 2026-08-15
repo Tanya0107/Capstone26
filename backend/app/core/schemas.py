@@ -179,7 +179,29 @@ class TelemetrySnapshot(ApiModel):
     idle_seconds: float = 0.0
 
 
+# ------------------------------------------------- analytics (FR8, FR13)
+class StudentAnalyticsRow(ApiModel):
+    """Aggregates for one student in one assignment. Values are None until
+    enough telemetry exists. Computation lands in Phase 5, Step 5.2."""
+    student_key: str
+    att_seconds: Optional[float] = None
+    tcv_seconds: Optional[float] = None
+    hsr: Optional[float] = None
+    ngs: Optional[float] = None
+    completed: bool = False
+
+
+class AssignmentAnalytics(ApiModel):
+    assignment_key: str
+    students: list[StudentAnalyticsRow] = Field(default_factory=list)
+
+
 # ------------------------------------------------- feedback loop (FR6)
+class FeedbackIngestResponse(ApiModel):
+    semantic_distance: float
+    stored: bool
+
+
 class TeacherEditRecord(ApiModel):
     teacher_key: str
     module_key: str

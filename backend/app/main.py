@@ -15,9 +15,9 @@ from app.api.routes import generation, tutor, feedback, analytics
 settings = get_settings()
 
 app = FastAPI(
-    title="Math Enrichment Platform — AI Server",
+    title="Enrichment Platform AI Server",
     version="0.1.0",
-    description="Multi-agent curriculum generation and Socratic tutoring backend.",
+    description="Multi-agent curriculum generation and Socratic tutoring backend, all subjects (D8).",
 )
 
 app.add_middleware(
