@@ -8,8 +8,8 @@ subject type, reported per subject and overall.
 | Req | Description (short) | Where implemented |
 |---|---|---|
 | FR1 | Teacher goals input | frontend app/teacher/create + GoalsForm; GenerationRequest |
-| FR2 | Auto curriculum generation | agents/orchestrator + agents/pipeline/* |
-| FR3 | Agentic self-correction | agents/pipeline/critic_agent + orchestrator loop |
+| FR2 | Auto curriculum generation | agents/orchestrator + agents/pipeline/* + agents/standards (MOE corpus, D4) |
+| FR3 | Agentic self-correction | agents/pipeline/critic_agent + answer_compare (normalization guard) + orchestrator loop + config.SUBJECT_TYPES (D8) |
 | FR4 | Automated quality scoring | app/evaluation/scoring (inline) + /evaluation (offline) |
 | FR5 | Review Dashboard | app/teacher/review/[moduleId] + ReviewEditor |
 | FR6 | Semantic distance -> memory bank | core/memory_bank + routes/feedback |

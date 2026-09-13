@@ -55,6 +55,15 @@ async def test_intake_raises_after_two_invalid_outputs(sample_request):
         await agent.run({"request": sample_request, "rag_context": []})
 
 
+async def test_json_with_leading_prose_parses_without_retry(sample_request):
+    """A chatty preamble around the JSON object must not cost a retry. The
+    fake holds one response, so a retry would exhaust it and fail."""
+    wrapped = "הנה הפלט המבוקש:\n" + VALID_INTAKE + "\nבהצלחה"
+    agent = IntakeAgent(model=resilient([wrapped]))
+    state = await agent.run({"request": sample_request, "rag_context": []})
+    assert state["standards"][0]["id"] == "IL-MOE-MATH-G5-NUM-01"
+
+
 async def test_intake_unknown_subject_raises(sample_request):
     request = sample_request.model_copy(update={"subject": "astrology"})
     agent = IntakeAgent(model=resilient([]))
@@ -167,6 +176,24 @@ async def test_lesson_design_rejects_duplicate_orders_then_retries(sample_reques
         ("½", "0.5", True),
         ("\\frac{3}{4}", "0.75", True),
         ("−5", "-5", True),
+        # Regressions from the 2026-09-13 dev runs
+        ("1 וה-5/12", "1 5/12", True),
+        ("4 וה-1/12", "4 1/12", True),
+        ("1 וחמש שתים-עשרה (1 וה-5/12)", "1 5/12", True),
+        ("המשקל שמדדתם גדול מהנדרש ב-0.05 כוסות", "0.05", True),
+        ("200 × (1 − p²/10000)", "200(1 - (p/100)^2)", True),
+        ("200(1-p^2/10000)", "200 × (1 − (p/100)²)", True),
+        ("200 - 2p + p^2/100", "200 × (1 − (p/100)²)", False),
+        ("62,100", "56,700", False),
+        # A Hebrew prefix hyphen is not a minus sign, a real minus still counts
+        ("ב-3", "-3", False),
+        ("-5", "5", False),
+        # Short categorical answers compare by words
+        ("חנות A", "A", True),
+        ("זוגי", "אי-זוגי", False),
+        # Undecidable for the guard, the critic's pass 2 audit decides
+        ("תהי המחיר M. חנות A: M × 0.80. חנות C: M × 0.828. לכן חנות A זולה יותר", "A", None),
+        ("חמש שתים-עשרה", "5/12", None),
     ],
 )
 def test_answers_equivalent(expected, actual, equal):
@@ -180,4 +207,4 @@ def test_sympy_path_refuses_unsafe_input():
 
     assert answer_compare._sympy_equal("x.__class__", "x") is None
     assert answer_compare._sympy_equal("__import__('os')", "1") is None
-    assert answers_equivalent("__import__('os').system('echo hi')", "5") is False
+    assert answers_equivalent("__import__('os').system('echo hi')", "5") is not True

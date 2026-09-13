@@ -2,14 +2,20 @@
 
 Compares the generator's stated answer against the critic's independent
 solve. Handles numeric tolerance, fraction, decimal, percent and mixed
-number equivalence, LaTeX and unicode fraction notation, algebraic
-equivalence via sympy, and Hebrew or unit text around the numbers.
+number equivalence, LaTeX, unicode fraction and superscript notation,
+algebraic equivalence via sympy, and Hebrew or unit text around the
+numbers, including Hebrew prefix letters joined to a number by a hyphen.
 
 The critic is told to return a bare final answer, while the stated answer
 may carry units or a short justification. On the text path the check
 therefore accepts when every value of the independent answer appears in
 the stated answer. This guard is a safety net under the critic's own
-pass 2 audit, not the only check.
+pass 2 audit, not the only check. Answers it cannot read reliably, such
+as a categorical label against a worked explanation or number words,
+return None and are left to that audit.
+
+Known limit: a single Latin letter after a number (5 m) reads as an
+algebraic variable. The prompts ask for bare answers without units.
 """
 from __future__ import annotations
 
@@ -19,26 +25,32 @@ NUMERIC_TOLERANCE = 1e-6
 MAX_SYMPY_LENGTH = 200
 
 HEBREW_RE = re.compile(r"[\u0590-\u05FF]")
+# In ב-0.05 or וה-5/12 the hyphen or maqaf after a Hebrew letter joins a
+# prefix to the number, it is not a minus sign
+HEBREW_PREFIX_HYPHEN_RE = re.compile(r"(?<=[\u05D0-\u05EA])[-\u05BE](?=[\d.])")
 BIDI_MARKS_RE = re.compile(r"[\u200e\u200f\u202a-\u202e]")
 THOUSANDS_RE = re.compile(r"(?<=\d),(?=\d{3}(?!\d))")
 LATEX_FRAC_RE = re.compile(r"\\d?frac\{([^{}]*)\}\{([^{}]*)\}")
 LATIN_WORD_RE = re.compile(r"[A-Za-z]{2,}")
 FILLER_RE = re.compile(r"(התשובה היא|בערך|בקירוב)")
 MATH_WORDS = {"sqrt", "sin", "cos", "tan", "log", "ln", "pi", "exp"}
+WORD_RE = re.compile(r"[\w-]+")
+SHORT_ANSWER_WORDS = 4
 
 # parse_expr evaluates its input, so only plain math reaches it
 SAFE_EXPR_RE = re.compile(r"[0-9a-zA-Z\s+\-*/^().]+")
 STRAY_DOT_RE = re.compile(r"(?<!\d)\.|\.(?!\d)")
 
 NUMBER = r"\d+(?:\.\d+)?"
-MIXED = r"[-+]?\d+\s+(?:ו-?\s*)?\d+\s*/\s*\d+"
+# Whole part, optional Hebrew conjunction (ו or וה), then the fraction
+MIXED = r"[-+]?\d+\s+(?:וה?-?\s*)?\d+\s*/\s*\d+"
 NUMBER_RE = re.compile(
     rf"(?P<mixed>{MIXED})"
     rf"|(?P<fraction>[-+]?{NUMBER}\s*/\s*{NUMBER})"
     rf"|(?P<percent>[-+]?{NUMBER}\s*%)"
     rf"|(?P<plain>[-+]?{NUMBER})"
 )
-MIXED_RE = re.compile(r"([-+]?)(\d+)\s+(?:ו-?\s*)?(\d+)\s*/\s*(\d+)")
+MIXED_RE = re.compile(r"([-+]?)(\d+)\s+(?:וה?-?\s*)?(\d+)\s*/\s*(\d+)")
 
 UNICODE_FRACTIONS = {"½": "1/2", "⅓": "1/3", "⅔": "2/3", "¼": "1/4", "¾": "3/4"}
 OPERATOR_SYMBOLS = {
@@ -46,6 +58,8 @@ OPERATOR_SYMBOLS = {
     "×": "*",
     "·": "*",
     "÷": "/",
+    "²": "^2",
+    "³": "^3",
     "\\cdot": "*",
     "\\times": "*",
     "$": "",
@@ -66,6 +80,7 @@ def _clean(answer: str) -> str:
         text = text.replace(symbol, replacement)
     for symbol, fraction in UNICODE_FRACTIONS.items():
         text = text.replace(symbol, f" {fraction}")
+    text = HEBREW_PREFIX_HYPHEN_RE.sub(" ", text)
     text = THOUSANDS_RE.sub("", text)
     text = FILLER_RE.sub("", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -152,9 +167,10 @@ def _sympy_equal(a: str, b: str) -> bool | None:
         return None
 
 
-def answers_equivalent(expected: str, actual: str) -> bool:
-    """True when the critic's independent answer (actual) agrees with the
-    generator's stated answer (expected) after normalization."""
+def answers_equivalent(expected: str, actual: str) -> bool | None:
+    """Whether the critic's independent answer (actual) agrees with the
+    generator's stated answer (expected) after normalization. None means
+    the guard cannot decide reliably."""
     stated, independent = _clean(expected), _clean(actual)
     if not stated or not independent:
         return stated == independent
@@ -183,4 +199,16 @@ def answers_equivalent(expected: str, actual: str) -> bool:
             for value in independent_tokens
         )
 
-    return stated.casefold() == independent.casefold()
+    if not stated_tokens and not independent_tokens:
+        stated_words = set(WORD_RE.findall(stated.casefold()))
+        independent_words = set(WORD_RE.findall(independent.casefold()))
+        if (
+            independent_words
+            and len(stated_words) <= SHORT_ANSWER_WORDS
+            and len(independent_words) <= SHORT_ANSWER_WORDS
+        ):
+            return independent_words <= stated_words
+
+    # Categorical or verbose answers the guard cannot read reliably, the
+    # critic's pass 2 audit decides these
+    return None

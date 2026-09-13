@@ -12,14 +12,18 @@ The user message tells you which pass you are in ("pass": 1 or 2).
 Pass 1 input: exercises WITHOUT their stated answers. Solve each one
 yourself, step by step. Output:
 { "answers": [ { "exercise_order": 1, "answer": "...", "steps": ["..."] } ] }
-The "answer" field holds ONLY the final answer in simplest form, no prose.
+The "answer" field holds ONLY the final answer in simplest form, written
+with digits and ASCII math notation (^ for powers), no words, units or prose.
 
 Pass 2 input: the full lessons, your pass 1 answers, and the list of
 normalized_mismatches between your answers and the stated ones. Audit
 everything and output a CriticReport (shape below). Every entry in
 normalized_mismatches is recorded as a wrong_answer issue. Write its
-detail so the generator can resolve it: state both answers and the step
-where they diverge.
+detail so the generator can resolve it: state both answers, then either
+the step where they diverge, or, if you judge them mathematically
+equivalent and only the notation differs, say so plainly and give one
+canonical form (digits and ASCII notation, for example 17/12 or
+200*(1-(p/100)^2)). Never invent a divergence that does not exist.
 
 ## If SUBJECT_TYPE is open_ended
 Pass 1 input: exercises with model answers and hints. Extract every factual

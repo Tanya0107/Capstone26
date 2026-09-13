@@ -34,6 +34,19 @@ def strip_code_fences(raw: str) -> str:
     return FENCE_RE.sub("", raw.strip()).strip()
 
 
+def parse_json_output(raw: str) -> Any:
+    """Parse model JSON, tolerating code fences and stray prose around one
+    top level object, so a chatty preamble does not cost a full retry."""
+    text = strip_code_fences(raw)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start, end = text.find("{"), text.rfind("}")
+        if start == -1 or end <= start:
+            raise
+        return json.loads(text[start : end + 1])
+
+
 class BaseAgent(ABC):
     name: str = "base"
     prompt_file: str = ""          # e.g. "intake.md"
@@ -82,7 +95,7 @@ class BaseAgent(ABC):
             timeout_s=self.remaining_budget(state),
         )
         try:
-            return validate(json.loads(strip_code_fences(raw)))
+            return validate(parse_json_output(raw))
         except Exception as first_error:
             logger.warning(
                 "%s output failed validation, retrying once: %s", self.name, first_error
@@ -100,7 +113,7 @@ class BaseAgent(ABC):
                 timeout_s=self.remaining_budget(state),
             )
             try:
-                return validate(json.loads(strip_code_fences(raw)))
+                return validate(parse_json_output(raw))
             except Exception as second_error:
                 raise AgentOutputError(
                     f"{self.name} output failed validation twice: {second_error}"

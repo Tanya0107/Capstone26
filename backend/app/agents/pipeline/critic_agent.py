@@ -8,8 +8,10 @@ Quantitative subjects (math, physics and similar)
   generator answer, on a different model family (settings.critic_model).
   Pass 2: compare and audit the full content.
   A deterministic normalization guard (answer_compare) then appends a
-  wrong_answer issue for any mismatch the model failed to flag, so a
-  polite critic can never wave a wrong answer through.
+  wrong_answer issue for any numeric or algebraic mismatch the model
+  failed to flag, so a polite critic can never wave a wrong answer
+  through. Answers the guard cannot read reliably, such as a categorical
+  label against a worked explanation, are left to the pass 2 audit.
 
 Open ended subjects (history, literature, science explanations)
   Pass 1: extract factual claims from prompts, model answers and hints and
@@ -105,9 +107,10 @@ class CriticAgent(BaseAgent):
         mismatches: dict[int, tuple[str, str]] = {}
         for exercise in exercises:
             own = own_answers.get(exercise.order)
-            if own is not None and not answers_equivalent(
+            # Only a decided mismatch counts, None defers to the pass 2 audit
+            if own is not None and answers_equivalent(
                 exercise.correct_answer, own.answer
-            ):
+            ) is False:
                 mismatches[exercise.order] = (exercise.correct_answer, own.answer)
 
         pass2_content = json.dumps(

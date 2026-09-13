@@ -122,3 +122,27 @@ async def test_open_ended_failed_claim_forces_rejection(sample_request):
     report = state["critic_report"]
     assert report.approved is False
     assert report.issues[0].issue_type == "factual_error"
+
+
+async def test_categorical_answer_defers_to_pass_two(sample_request):
+    """Regression from the difficulty 5 dev run: a store label from the
+    blind solve against a worked explanation must not force wrong_answer."""
+    lessons = [
+        LessonUnit(
+            title="אחוזים",
+            objectives=["השוואת מחירים"],
+            hook="שלוש חנויות",
+            exercises=[
+                Exercise(
+                    order=1,
+                    prompt="איזו חנות זולה יותר, A או C?",
+                    correct_answer="חנות A: M × 0.80. חנות C: M × 0.828. לכן חנות A זולה יותר.",
+                )
+            ],
+        )
+    ]
+    pass1 = json.dumps({"answers": [{"exercise_order": 1, "answer": "A", "steps": []}]})
+    agent = critic_with([pass1, CLEAN_REPORT])
+    state = await agent.run({"request": sample_request, "lessons": lessons})
+    assert state["critic_report"].approved is True
+    assert state["critic_report"].issues == []
