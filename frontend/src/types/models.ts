@@ -192,6 +192,7 @@ export interface AssessmentBundle {
 export interface CurriculumPackage {
   moduleKey?: string;
   title: string;
+  summary?: string;
   subject: string;
   gradeLevel: string;
   difficultyLevel: number;

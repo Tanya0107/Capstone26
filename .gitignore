@@ -20,6 +20,5 @@ firestore-debug.log
 .DS_Store
 .idea/
 .vscode/
-# Evaluation artifacts
-evaluation/results/
+# Evaluation results are committed as evidence (R1), do not ignore them
 *.tsbuildinfo

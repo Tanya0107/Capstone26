@@ -1,8 +1,73 @@
 {
   "corpus": "il_moe",
   "subject": "science",
-  "version": "0.1.0",
+  "version": "0.2.0-draft",
   "language": "he",
-  "source_note": "Mixed subject sample for D9 stratified evaluation. Curate from official MOE curriculum documents.",
-  "standards": []
+  "draft_pending_validation": true,
+  "source_note": "Mixed subject sample for D9. Entries drafted by the coding agent from the elementary science and technology curriculum (MOE). The team must validate every entry against the source document before merge (BUILD_GUIDE Step 3.3 pre-task).",
+  "standards": [
+    {
+      "id": "IL-MOE-SCI-G4-MAT-01",
+      "grade": "4",
+      "domain": "materials",
+      "text_he": "הכרת מצבי הצבירה של החומר, מוצק נוזל וגז, ותיאור מעברים בין מצבי צבירה בעקבות חימום וקירור",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק חומרים, כיתה ד"
+    },
+    {
+      "id": "IL-MOE-SCI-G4-LIFE-01",
+      "grade": "4",
+      "domain": "life_science",
+      "text_he": "הכרת מאפייני יצורים חיים, צורכי קיום של צמחים ובעלי חיים, והתאמות לסביבות חיים שונות",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק עולם היצורים החיים, כיתה ד"
+    },
+    {
+      "id": "IL-MOE-SCI-G5-ENE-01",
+      "grade": "5",
+      "domain": "energy",
+      "text_he": "הכרת סוגי אנרגיה, המרות אנרגיה במערכות טכנולוגיות ובטבע, וחשיבות החיסכון באנרגיה",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק אנרגיה, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-SCI-G5-EARTH-01",
+      "grade": "5",
+      "domain": "earth_and_space",
+      "text_he": "הכרת מחזור המים בטבע, מזג אוויר ואקלים, והשפעת האדם על משאבי המים",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק כדור הארץ והיקום, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-SCI-G5-LIFE-01",
+      "grade": "5",
+      "domain": "life_science",
+      "text_he": "הכרת מערכות אקולוגיות, יחסי גומלין בין יצורים חיים לסביבתם, ושרשרות מזון",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק מערכות אקולוגיות, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-SCI-G5-INQ-01",
+      "grade": "5",
+      "domain": "inquiry_skills",
+      "text_he": "תכנון וביצוע ניסוי מבוקר, ניסוח שאלת חקר והשערה, איסוף נתונים והסקת מסקנות",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק מיומנויות חקר, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-SCI-G6-MAT-01",
+      "grade": "6",
+      "domain": "materials",
+      "text_he": "הבחנה בין תערובת לתמיסה, שיטות הפרדת תערובות, ושימושים יומיומיים של תהליכי הפרדה",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק חומרים, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-SCI-G6-LIFE-01",
+      "grade": "6",
+      "domain": "life_science",
+      "text_he": "הכרת מערכות בגוף האדם, מערכת העיכול הנשימה וההובלה, והקשר בין תזונה נכונה לבריאות",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק גוף האדם, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-SCI-G6-EARTH-01",
+      "grade": "6",
+      "domain": "earth_and_space",
+      "text_he": "הכרת מערכת השמש, תנועות כדור הארץ והירח, והסבר תופעות היום והלילה ועונות השנה",
+      "source": "תכנית הלימודים במדע וטכנולוגיה לבית הספר היסודי, פרק כדור הארץ והיקום, כיתה ו"
+    }
+  ]
 }

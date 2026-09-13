@@ -138,6 +138,7 @@ class CurriculumPackage(ApiModel):
     """Structured JSON teacher guide returned by the pipeline (Curriculum Package Agent)."""
     module_key: Optional[str] = None
     title: str
+    summary: Optional[str] = Field(default=None, description="Short teacher guide summary in Hebrew (Package Agent)")
     subject: str
     grade_level: str
     difficulty_level: int

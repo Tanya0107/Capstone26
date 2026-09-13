@@ -51,15 +51,18 @@ class PipelineState(TypedDict, total=False):
     critic_report: CriticReport
     package: CurriculumPackage
     started_at: float
+    budget_s: float
     cycles: int
 
 
 def remaining_budget(state: PipelineState) -> float:
-    """Seconds left in the NFR2 budget, floored at zero. Stages pass this
-    as timeout_s to core.llm calls."""
+    """Seconds left in the run budget, floored at zero. Stages pass this
+    as timeout_s to core.llm calls. budget_s carries any per run override
+    (dev runs), defaulting to the NFR2 setting."""
     settings = get_settings()
+    budget = state.get("budget_s", settings.generation_timeout_seconds)
     elapsed = time.monotonic() - state["started_at"]
-    return max(settings.generation_timeout_seconds - elapsed, 0.0)
+    return max(budget - elapsed, 0.0)
 
 
 def default_agents() -> dict[str, Any]:
@@ -155,6 +158,7 @@ async def run_pipeline(
         "request": request,
         "rag_context": rag_context,
         "started_at": time.monotonic(),
+        "budget_s": budget,
         "cycles": 0,
     }
     compiled = build_graph(agents)

@@ -222,7 +222,7 @@
                     "analytics"
                 ],
                 "summary": "Assignment Analytics",
-                "description": "Aggregate ATT / TCV / HSR / NGS per student for one assignment.\n\nTODO Phase 5, Step 5.2: read telemetryEvents + studentProgress, compute via\ncore.telemetry, return chart-ready JSON. Consider caching (60s) \u2014 dashboards\npoll; raw events can be large.",
+                "description": "Aggregate ATT / TCV / HSR / NGS per student for one assignment.\n\nTODO Phase 5, Step 5.2: read telemetryEvents + studentProgress, compute via\ncore.telemetry, return chart-ready JSON. Consider caching (60s) — dashboards\npoll; raw events can be large.",
                 "operationId": "assignment_analytics_api_analytics_assignment__assignment_key__get",
                 "parameters": [
                     {
@@ -448,6 +448,18 @@
                     "title": {
                         "type": "string",
                         "title": "Title"
+                    },
+                    "summary": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Summary",
+                        "description": "Short teacher guide summary in Hebrew (Package Agent)"
                     },
                     "subject": {
                         "type": "string",

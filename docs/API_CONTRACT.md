@@ -39,6 +39,12 @@ in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
   `ChatMessage`, analytics models; `assignedStudentKeys` on modules and
   exercises (D11).
 
+### Post-freeze contract changes
+
+- Step 3.3: `CurriculumPackage.summary` (optional string) added — the
+  Package Agent's short Hebrew teacher-guide summary. Mirrored in
+  `models.ts`, frozen spec re-exported.
+
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
 The book's Fig 4 stores `correctAnswer` and `socraticHints` on the exercise

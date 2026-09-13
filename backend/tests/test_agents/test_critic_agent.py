@@ -41,16 +41,84 @@ async def test_loop_cap_surfaces_unapproved_package(sample_request):
     assert agents["critic"].calls == max_cycles + 1
 
 
-@pytest.mark.skip(reason="Implement in Phase 3, Step 3.3")
-def test_wrong_answer_detected():
-    ...
+import json
+
+from app.agents.pipeline.critic_agent import CriticAgent
+from app.core.llm import ResilientChatModel
+from app.core.schemas import Exercise, LessonUnit
+from tests.conftest import FakeChatModel
 
 
-@pytest.mark.skip(reason="Implement in Phase 3, Step 3.3")
-def test_hallucinated_step_detected():
-    ...
+def lessons_with_answer(answer: str) -> list[LessonUnit]:
+    return [
+        LessonUnit(
+            title="שברים",
+            objectives=["הבנה"],
+            hook="פיצה",
+            exercises=[
+                Exercise(order=1, prompt="כמה זה 3 כפול 4?", correct_answer=answer)
+            ],
+        )
+    ]
 
 
-@pytest.mark.skip(reason="Implement in Phase 3, Step 3.3")
-def test_clean_unit_approved():
-    ...
+def critic_with(responses: list[str]) -> CriticAgent:
+    return CriticAgent(model=ResilientChatModel(FakeChatModel(responses), backoff_base_s=0.001))
+
+
+PASS1_SAYS_15 = json.dumps({"answers": [{"exercise_order": 1, "answer": "15", "steps": ["3*4=15"]}]})
+PASS1_SAYS_12 = json.dumps({"answers": [{"exercise_order": 1, "answer": "12", "steps": ["3*4=12"]}]})
+CLEAN_REPORT = json.dumps({"approved": True, "issues": []})
+HALLUCINATED_REPORT = json.dumps({
+    "approved": False,
+    "issues": [
+        {"exerciseOrder": 1, "issueType": "hallucinated_step", "detail": "שלב אלגברי שגוי"}
+    ],
+})
+
+
+async def test_wrong_answer_detected(sample_request):
+    """Case 1: generator says 12, independent solve says 15. The
+    normalization guard flags it even though the model report was clean."""
+    agent = critic_with([PASS1_SAYS_15, CLEAN_REPORT])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is False
+    assert report.issues[0].issue_type == "wrong_answer"
+
+
+async def test_hallucinated_step_detected(sample_request):
+    """Case 2: answers match but the model found an invalid step."""
+    agent = critic_with([PASS1_SAYS_12, HALLUCINATED_REPORT])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is False
+    assert report.issues[0].issue_type == "hallucinated_step"
+
+
+async def test_clean_unit_approved(sample_request):
+    """Case 3: matching answers and a clean audit approve with zero issues."""
+    agent = critic_with([PASS1_SAYS_12, CLEAN_REPORT])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is True
+    assert report.issues == []
+
+
+async def test_open_ended_failed_claim_forces_rejection(sample_request):
+    """Open ended mode: a false claim becomes factual_error via the guard."""
+    request = sample_request.model_copy(update={"subject": "history"})
+    pass1 = json.dumps({
+        "claims": [
+            {"exercise_order": 1, "claim": "טענה שגויה", "verdict": "false", "evidence": "מקור"}
+        ]
+    })
+    agent = critic_with([pass1, CLEAN_REPORT])
+    state = {"request": request, "lessons": lessons_with_answer("תשובת מודל")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is False
+    assert report.issues[0].issue_type == "factual_error"

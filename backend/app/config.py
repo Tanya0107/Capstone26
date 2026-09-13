@@ -37,3 +37,25 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+# D8 critic strategy map. A new subject must be classified here before it
+# can run (BUILD_GUIDE Step 3.3). quantitative gets the two pass
+# independent solve protocol, open_ended gets claim verification.
+SUBJECT_TYPES: dict[str, str] = {
+    "math": "quantitative",
+    "physics": "quantitative",
+    "science": "open_ended",
+    "history": "open_ended",
+    "literature": "open_ended",
+}
+
+
+def subject_type(subject: str) -> str:
+    try:
+        return SUBJECT_TYPES[subject]
+    except KeyError:
+        raise ValueError(
+            f"Subject '{subject}' is not classified in SUBJECT_TYPES, "
+            "classify it before running the pipeline (D8)"
+        ) from None

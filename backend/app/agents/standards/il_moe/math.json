@@ -1,16 +1,87 @@
 {
   "corpus": "il_moe",
   "subject": "math",
-  "version": "0.1.0",
+  "version": "0.2.0-draft",
   "language": "he",
-  "source_note": "Curate from official MOE curriculum documents. Placeholder entry defines the shape only.",
+  "draft_pending_validation": true,
+  "source_note": "Entries drafted by the coding agent from the official elementary math curriculum (MOE 2006). The team must validate every entry against the source document before merge (BUILD_GUIDE Step 3.3 pre-task).",
   "standards": [
+    {
+      "id": "IL-MOE-MATH-G4-NUM-01",
+      "grade": "4",
+      "domain": "numbers_and_operations",
+      "text_he": "הכרת המבנה העשרוני של מספרים טבעיים עד 1,000,000 וביצוע ארבע פעולות החשבון במספרים רב ספרתיים",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק מספרים ופעולות, כיתה ד"
+    },
+    {
+      "id": "IL-MOE-MATH-G4-NUM-02",
+      "grade": "4",
+      "domain": "numbers_and_operations",
+      "text_he": "הכרת שברים פשוטים כחלק משלם וכחלק מכמות, השוואת שברים פשוטים ומציאת שברים שווי ערך",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק שברים, כיתה ד"
+    },
+    {
+      "id": "IL-MOE-MATH-G4-GEO-01",
+      "grade": "4",
+      "domain": "geometry",
+      "text_he": "הכרת מרובעים ותכונותיהם, מדידת היקף ושטח של מלבן ביחידות מידה סטנדרטיות",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק גאומטריה ומדידות, כיתה ד"
+    },
     {
       "id": "IL-MOE-MATH-G5-NUM-01",
       "grade": "5",
       "domain": "numbers_and_operations",
-      "text_he": "TODO: paste the official standard text in Hebrew",
-      "source": "TODO: document name, year, section"
+      "text_he": "חיבור וחיסור של שברים פשוטים ומספרים מעורבים, כולל הרחבה וצמצום ומציאת מכנה משותף",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק שברים פשוטים, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-MATH-G5-NUM-02",
+      "grade": "5",
+      "domain": "numbers_and_operations",
+      "text_he": "הכרת השבר העשרוני, הקשר בין שבר עשרוני לשבר פשוט, וביצוע חיבור וחיסור של שברים עשרוניים",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק שברים עשרוניים, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-MATH-G5-NUM-03",
+      "grade": "5",
+      "domain": "numbers_and_operations",
+      "text_he": "כפל וחילוק של מספרים טבעיים רב ספרתיים, אומדן תוצאות ובדיקת סבירות התשובה",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק מספרים ופעולות, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-MATH-G5-GEO-01",
+      "grade": "5",
+      "domain": "geometry",
+      "text_he": "חקירת תכונות משולשים, סיווג משולשים לפי צלעות וזוויות, ומדידת זוויות במעלות",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק גאומטריה, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-MATH-G5-DATA-01",
+      "grade": "5",
+      "domain": "data_and_statistics",
+      "text_he": "איסוף נתונים, ארגונם בטבלאות ובדיאגרמות, וחישוב ממוצע חשבוני של קבוצת נתונים",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק חקר נתונים, כיתה ה"
+    },
+    {
+      "id": "IL-MOE-MATH-G6-NUM-01",
+      "grade": "6",
+      "domain": "numbers_and_operations",
+      "text_he": "כפל וחילוק של שברים פשוטים ושברים עשרוניים ופתרון בעיות מילוליות רב שלביות",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק שברים, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-MATH-G6-NUM-02",
+      "grade": "6",
+      "domain": "numbers_and_operations",
+      "text_he": "הכרת מושג האחוז, הקשר בין אחוז, שבר פשוט ושבר עשרוני, ופתרון בעיות אחוזים מחיי היום יום",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק אחוזים, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-MATH-G6-GEO-01",
+      "grade": "6",
+      "domain": "geometry",
+      "text_he": "חישוב שטח משולש, מקבילית וטרפז, ושטח פנים ונפח של תיבה",
+      "source": "תכנית הלימודים במתמטיקה לבית הספר היסודי, תשס\"ו, פרק מדידות, כיתה ו"
     }
   ]
 }

@@ -12,10 +12,13 @@ never the network (R7).
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 from typing import AsyncIterator, Optional, Protocol
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 JSON_ONLY_INSTRUCTION = (
     "Respond with a single valid JSON object only, no prose, no code fences."
@@ -90,7 +93,8 @@ class ResilientChatModel:
                 if attempt < self.max_retries:
                     await asyncio.sleep(self.backoff_base_s * (2 ** attempt))
         raise LLMCallError(
-            f"LLM call failed after {self.max_retries + 1} attempts"
+            f"LLM call failed after {self.max_retries + 1} attempts, "
+            f"last error: {type(last_error).__name__}: {last_error}"
         ) from last_error
 
     async def stream(self, system: str, messages: list[dict]) -> AsyncIterator[str]:
@@ -105,6 +109,7 @@ class LangChainChatModel:
         self.chat = chat
         self.json_bind_kwargs = json_bind_kwargs or {}
         self.last_usage: Optional[dict] = None
+        self.last_stop_reason: Optional[str] = None
 
     @staticmethod
     def _to_langchain_messages(system: str, messages: list[dict]) -> list[tuple]:
@@ -135,6 +140,14 @@ class LangChainChatModel:
                 chat = chat.bind(**self.json_bind_kwargs)
         response = await chat.ainvoke(self._to_langchain_messages(system, messages))
         self.last_usage = getattr(response, "usage_metadata", None)
+        metadata = getattr(response, "response_metadata", None) or {}
+        # Anthropic reports stop_reason, OpenAI reports finish_reason
+        self.last_stop_reason = metadata.get("stop_reason") or metadata.get("finish_reason")
+        if self.last_stop_reason in ("max_tokens", "length"):
+            logger.warning(
+                "Model output truncated at the token limit (%s), output is incomplete",
+                self.last_stop_reason,
+            )
         return self._content_to_text(response.content)
 
     async def stream(self, system: str, messages: list[dict]) -> AsyncIterator[str]:
@@ -176,12 +189,14 @@ def get_chat_model(role: str) -> ResilientChatModel:
         )
         # Empty key falls through to call time auth errors, which keeps
         # unit tests free of env requirements
+        # The transport timeout is a generous safety net only. The real
+        # budget control is the per call timeout_s from the orchestrator.
         chat = ChatAnthropic(
             model=model_name,
             api_key=settings.anthropic_api_key or "not-set",
             max_tokens=16000,
             max_retries=0,
-            timeout=60,
+            timeout=300,
             default_headers=default_headers,
         )
         json_bind_kwargs = None
@@ -192,7 +207,7 @@ def get_chat_model(role: str) -> ResilientChatModel:
             model=model_name,
             api_key=settings.openai_api_key or "not-set",
             max_retries=0,
-            timeout=60,
+            timeout=180,
         )
         json_bind_kwargs = {"response_format": {"type": "json_object"}}
 
