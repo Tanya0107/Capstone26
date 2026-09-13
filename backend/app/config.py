@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     # LLM providers
     anthropic_api_key: str = ""
+    # Required when the Anthropic key is not scoped to a workspace
+    anthropic_workspace_id: str = ""
     openai_api_key: str = ""
     generator_model: str = "claude-sonnet-4-6"
     critic_model: str = "gpt-4o"

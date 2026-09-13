@@ -168,6 +168,12 @@ def get_chat_model(role: str) -> ResilientChatModel:
     if model_name.startswith("claude"):
         from langchain_anthropic import ChatAnthropic
 
+        # Keys not scoped to a workspace must send the workspace id header
+        default_headers = (
+            {"anthropic-workspace-id": settings.anthropic_workspace_id}
+            if settings.anthropic_workspace_id
+            else None
+        )
         # Empty key falls through to call time auth errors, which keeps
         # unit tests free of env requirements
         chat = ChatAnthropic(
@@ -176,6 +182,7 @@ def get_chat_model(role: str) -> ResilientChatModel:
             max_tokens=16000,
             max_retries=0,
             timeout=60,
+            default_headers=default_headers,
         )
         json_bind_kwargs = None
     else:
