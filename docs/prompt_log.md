@@ -1,0 +1,111 @@
+# Prompt Iteration Log (R2, Step 3.3 onward)
+
+Defense material: records how the pipeline prompts evolved and why, with
+run evidence under `evaluation/results/dev_runs/` (all labeled DEV per R1).
+
+## Iteration 1 -> 2 (Step 3.3, 2026-09-13)
+
+The skeleton drafts (iteration 1, see git history of `backend/app/agents/prompts/`)
+described intent but under-specified the output contract. Iteration 2 changes,
+applied before the first real-model runs:
+
+| Prompt | Change | Why |
+|---|---|---|
+| all | Exact output JSON shapes spelled out with camelCase keys matching the frozen API contract | The pydantic validators parse by alias; leaving key casing implicit invites a validation retry on every call |
+| all | "no prose, no code fences" + keys-in-English/free-text-in-Hebrew split made explicit | Early smoke outputs wrapped JSON in fences; D5 requires Hebrew content but JSON keys must stay stable |
+| intake | UNMAPPED escape hatch kept, but added "choose 2 to 4 standards, not every remotely related one" | Prevents the agent citing the whole grade slice, which dilutes downstream lesson focus |
+| scope_sequence | Bounded to 4 to 8 weeks, consecutive numbering, flex weeks still carry a focus | Unbounded drafts produced 12+ week plans that overflow an enrichment format |
+| lesson_design | Globally unique consecutive exercise `order` ACROSS lessons + enforced in code (`_validate_lessons`) | The critic addresses issues by `exercise_order`; per-lesson restarts at 1 made issue routing ambiguous |
+| lesson_design | Hint ladder levels named (metacognitive, concept, strategy, sub step) and "never contain or directly imply the final answer" | Feeds the FR11 leak guard; draft only said "never the answer" |
+| lesson_design | Regeneration contract: "fix EXACTLY the listed issues... keep all other exercises unchanged" with previous_lessons included | Without the previous content the model regenerated everything, defeating cycle counting |
+| critic | Two-pass protocol tied to explicit `"pass": 1/2` field in the user payload | One system prompt serves both passes; the model needs a deterministic signal for which output shape to produce |
+| critic | Added anti-agreeableness framing ("report every issue... better to surface a finding that gets dismissed") | Cross-family critics still skew polite; recall matters more than precision here because a deterministic normalization guard filters downstream |
+| critic | `normalized_mismatches` injected into pass 2, and code appends `wrong_answer` for any unflagged mismatch | FR3 rigor cannot depend on the model choosing to complain; the sympy/numeric guard makes wrong answers structurally impossible to wave through |
+| assessment_design | Diagnostics pinned to "objectively scorable" and 4 to 6 items | They double as the NGS pre/post test (Phase 5); subjective items would break NGS scoring |
+| package | Title capped at 8 words, summary 2 to 3 sentences | Review dashboard card layout; `summary` field added to the contract in the same commit |
+
+## Iteration 2 -> 3 (Step 3.3, after the first real-model runs)
+
+First real runs: science (253s) and history (306s) completed with the
+critic approving on the first pass. Both math briefs ran past the dev
+time ceiling. Math is the only subject that runs the normalization
+guard, which pointed at the changes below. The per stage timings from
+the rerun (next section) confirm or refute that diagnosis.
+
+| Area | Change | Why |
+|---|---|---|
+| critic guard (`answer_compare.py`) | Normalizer reads through units and Hebrew text, percent written as 20% / 20 / 0.2, mixed numbers (including `1 ו-3/4`), LaTeX `\frac`, unicode fractions and thousands separators. It accepts a short justification on the stated side as long as the critic's value appears in it | `"3/4 כוס"` vs `"0.75"` counted as a mismatch, and the guard turns every mismatch into a wrong_answer rejection, so a correct math unit could loop to the regeneration cap |
+| critic guard | sympy only sees strings that pass a plain-math allowlist | `parse_expr` evaluates its input, so model output containing Python must never reach it |
+| critic.md | Mismatch wording now matches the code: every normalized mismatch is recorded, and the detail must name both answers and the step where they diverge | The old wording said the model could overrule a mismatch, but the code guard never lets it |
+| lesson_design.md | On a wrong_answer issue the generator re-solves from scratch and keeps a correct original answer while tightening the prompt | Blindly adopting the critic's number corrupts a correct exercise whenever the critic's own solve is the wrong one. Persistent disagreement still reaches the teacher through approved False at the cap |
+| observability | Validation retries and max-token truncations are logged, and the dev runner records per stage timings and every critic verdict | Needed to tell apart the candidate causes of the slow math runs: critic loops, validation retries, truncation |
+
+## Iteration 3 -> 4 (Step 3.3, from the instrumented math reruns)
+
+Per stage timings and critic verdicts (records `*.iter3.json`) showed the
+slow math runs came from the critic loop, not from slow stages or
+truncation:
+
+- math_fractions_g5: approved after 2 regeneration cycles in 477s. The
+  final answers (1 5/12, 4 1/12, 0.05) were correct in every cycle. Both
+  rejections were normalizer false positives on `1 וה-5/12` and
+  `ב-0.05`. In cycle 1 the critic model itself wrote that the answers
+  were identical, but the iteration 3 wording forced it to record them
+  anyway. The two wasted cycles cost about 290s.
+- math_hard_percent_g6 (difficulty 5): hit the regeneration cap in 673s
+  and surfaced approved False with 3 issues. The loop fixed one genuine
+  generator error (#3, 62,100 corrected to 56,700). None of the three
+  final flags is a generator error: #3 and #4 come from mistakes in the
+  critic's own blind solve (59,490 and 200 - 2p + p^2/100), and #6
+  compares the label "A" against a worked explanation. #4 also hit a
+  superscript `²` normalizer gap in cycles 0 and 1.
+- One lesson_design output failed to parse at char 0 and cost a 110s
+  retry. No truncation was logged.
+
+| Area | Change | Why |
+|---|---|---|
+| normalizer | A hyphen or maqaf after a Hebrew letter is a prefix joiner, not a minus. `ו` and `וה` conjunctions inside mixed numbers. Superscript powers map to `^` | The exact strings from the run are now regression tests |
+| normalizer | Returns None (undecidable) when it cannot read an answer reliably, such as a categorical label against a worked explanation or number words, and those cases fall to the pass 2 audit. Short categorical answers compare by words | The book specifies numeric and algebraic comparison. Forcing a verdict outside that range produced the bogus #6 flag |
+| JSON parsing | Extract the single top level object when prose surrounds it | A chatty preamble cost a full 110s regeneration |
+| critic.md | When the answers are equivalent and only the notation differs, the critic says so and gives one canonical form. It must never invent a divergence | The iteration 3 wording made the critic describe equivalent answers as errors, which misleads the generator |
+| critic.md, lesson_design.md | Quantitative answers use digits and standard notation only, no words, units or explanation. Reasoning goes in scaffoldSteps. On a notation-only issue the generator restates its answer in the canonical form | Verbose stated answers defeat both the critic guard and the Step 3.5 answer-leak guard, which compares against correctAnswer |
+
+Still open (raised to the team as Q11): gpt-4o's blind solves erred on
+2 of the 3 final flags of the difficulty 5 brief.
+
+## Dev run evidence (2026-09-13)
+
+All records carry the DEV label (R1) and live in
+`evaluation/results/dev_runs/`. The NFR2 15s budget was overridden for
+these runs so real latency could be measured, see Q10.
+
+| Brief | Critic mode | Prompts | Wall time | Regeneration cycles | Final critic verdict |
+|---|---|---|---|---|---|
+| science_ecosystems_g5 | open_ended | iteration 2 | 252.8s | 0 | approved, 0 issues |
+| history_ancient_g6 | open_ended | iteration 2 | 305.6s | 0 | approved, 1 soft issue (unsupported_claim) |
+| math_fractions_g5 | quantitative | iteration 4 | 311.9s | 1 | approved, 0 issues |
+| math_hard_percent_g6 | quantitative | iteration 3 | 673.4s | 2 (cap) | not approved, 3 issues surfaced to the teacher |
+
+Findings:
+
+- Every package validates as `CurriculumPackage`, with Hebrew content and
+  globally consecutive exercise orders.
+- The fractions rerun after iteration 4 shows the fixes working on live
+  output: 477s and 2 false positive cycles before, 312s and one genuine
+  cycle after. That cycle caught a real generator error. Exercise #5
+  (12 cookies need 3/4 cup of honey, how much for 20) was first stated as
+  5/6. The critic's blind solve gave 1 1/4, the loop corrected it, and the
+  critic then approved. Checked by hand: 3/4 × 20/12 = 15/12 = 1 1/4. All
+  six final answers were checked by hand and are correct.
+- The hard brief exercised the full loop to the cap, and the rejection
+  reached the teacher instead of being dropped, as FR3 requires. Its
+  record predates the iteration 4 fixes and is kept as the Q11 evidence.
+- Latency (fractions rerun, per stage): intake 28s, scope and sequence
+  18s, lesson design 85s, assessment design 42s, critic 10s, package 8s,
+  about 191s for one pass. The regeneration cycle added 120s (lesson
+  design 78s, assessment 35s, critic 7s). This is the basis of Q10.
+- Observation for the next iteration: exercise #5 scaffold step 3 shows
+  the unsimplified result (15/12), while rule 4 of lesson_design.md asks
+  for steps that do not solve the task. Whether an unsimplified
+  intermediate is acceptable scaffolding is a pedagogy call for the
+  teachers, so it is noted here rather than changed.
