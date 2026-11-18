@@ -10,7 +10,9 @@ Quantitative subjects (math, physics and similar)
   A deterministic normalization guard (answer_compare) then appends a
   wrong_answer issue for any numeric or algebraic mismatch the model
   failed to flag, so a polite critic can never wave a wrong answer
-  through. Answers the guard cannot read reliably, such as a categorical
+  through. A mismatch is re-solved blind a second time first and kept
+  only if that solve also disagrees (Q11), because the critic's own
+  solve can be the wrong one. Answers the guard cannot read reliably, such as a categorical
   label against a worked explanation, are left to the pass 2 audit.
 
 Open ended subjects (history, literature, science explanations)
@@ -29,6 +31,7 @@ Phase B stress test (evaluation/critic_stress_test.py) plants flaws of
 both kinds and measures detection accuracy per subject type.
 """
 import json
+import logging
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -37,6 +40,8 @@ from app.agents.base import BaseAgent
 from app.agents.pipeline.answer_compare import answers_equivalent
 from app.config import subject_type
 from app.core.schemas import CriticIssue, CriticReport, Exercise
+
+logger = logging.getLogger(__name__)
 
 HARD_ISSUES = {"wrong_answer", "hallucinated_step", "factual_error"}
 
@@ -113,6 +118,11 @@ class CriticAgent(BaseAgent):
             ) is False:
                 mismatches[exercise.order] = (exercise.correct_answer, own.answer)
 
+        if mismatches:
+            mismatches = await self._confirm_mismatches(
+                system, state, exercises, mismatches
+            )
+
         pass2_content = json.dumps(
             {
                 "pass": 2,
@@ -152,6 +162,56 @@ class CriticAgent(BaseAgent):
                     )
                 )
         return report
+
+    async def _confirm_mismatches(
+        self,
+        system: str,
+        state: dict,
+        exercises: list[Exercise],
+        mismatches: dict[int, tuple[str, str]],
+    ) -> dict[int, tuple[str, str]]:
+        """Re-solve only the disputed exercises, blind, and keep a mismatch
+        only when the second solve also disagrees with the stated answer (Q11).
+
+        A single blind solve can itself be wrong, which marked correct units
+        unapproved in the dev runs. The stated answer is never shown here, so
+        the second solve stays independent. Dropping a flag needs positive
+        agreement, an undecidable comparison keeps it, so the guard never
+        loses a real error in exchange for fewer false positives.
+        """
+        disputed = [ex for ex in exercises if ex.order in mismatches]
+        content = json.dumps(
+            {
+                "pass": "1b",
+                "instruction": (
+                    "Re-solve these exercises independently and carefully, "
+                    "step by step. You are NOT shown any stated answers."
+                ),
+                "exercises": [
+                    {"exercise_order": ex.order, "prompt": ex.prompt}
+                    for ex in disputed
+                ],
+            },
+            ensure_ascii=False,
+        )
+        second = await self.call_json(
+            system, content, state, Pass1Answers.model_validate
+        )
+        second_answers = {a.exercise_order: a.answer for a in second.answers}
+
+        confirmed: dict[int, tuple[str, str]] = {}
+        for order, (stated, first) in mismatches.items():
+            again = second_answers.get(order)
+            if again is not None and answers_equivalent(stated, again) is True:
+                logger.info(
+                    "Exercise %s: second blind solve agreed with the stated "
+                    "answer, dropping the mismatch from the first solve (%s)",
+                    order,
+                    first,
+                )
+                continue
+            confirmed[order] = (stated, first)
+        return confirmed
 
     async def _review_open_ended(
         self, system: str, state: dict, exercises: list[Exercise]

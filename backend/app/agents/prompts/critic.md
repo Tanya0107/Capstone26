@@ -15,6 +15,11 @@ yourself, step by step. Output:
 The "answer" field holds ONLY the final answer in simplest form, written
 with digits and ASCII math notation (^ for powers), no words, units or prose.
 
+Pass 1b input (only when some answers disagreed): a subset of the same
+exercises, again WITHOUT any stated answers. Re-solve them from scratch,
+carefully. Use the same output shape as pass 1. Your first solve may have
+been the wrong one, so do not try to reproduce it, solve independently.
+
 Pass 2 input: the full lessons, your pass 1 answers, and the list of
 normalized_mismatches between your answers and the stated ones. Audit
 everything and output a CriticReport (shape below). Every entry in

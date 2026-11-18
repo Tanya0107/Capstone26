@@ -68,6 +68,9 @@ def critic_with(responses: list[str]) -> CriticAgent:
 
 PASS1_SAYS_15 = json.dumps({"answers": [{"exercise_order": 1, "answer": "15", "steps": ["3*4=15"]}]})
 PASS1_SAYS_12 = json.dumps({"answers": [{"exercise_order": 1, "answer": "12", "steps": ["3*4=12"]}]})
+# Pass 1b, the Q11 confirmation re-solve, same shape as pass 1
+RESOLVE_SAYS_15 = PASS1_SAYS_15
+RESOLVE_SAYS_12 = PASS1_SAYS_12
 CLEAN_REPORT = json.dumps({"approved": True, "issues": []})
 HALLUCINATED_REPORT = json.dumps({
     "approved": False,
@@ -78,9 +81,9 @@ HALLUCINATED_REPORT = json.dumps({
 
 
 async def test_wrong_answer_detected(sample_request):
-    """Case 1: generator says 12, independent solve says 15. The
+    """Case 1: generator says 12, both blind solves say 15. The
     normalization guard flags it even though the model report was clean."""
-    agent = critic_with([PASS1_SAYS_15, CLEAN_REPORT])
+    agent = critic_with([PASS1_SAYS_15, RESOLVE_SAYS_15, CLEAN_REPORT])
     state = {"request": sample_request, "lessons": lessons_with_answer("12")}
     state = await agent.run(state)
     report = state["critic_report"]
@@ -146,3 +149,24 @@ async def test_categorical_answer_defers_to_pass_two(sample_request):
     state = await agent.run({"request": sample_request, "lessons": lessons})
     assert state["critic_report"].approved is True
     assert state["critic_report"].issues == []
+
+
+async def test_second_solve_rescues_a_correct_answer(sample_request):
+    """Q11: the first blind solve was the wrong one. The confirmation
+    re-solve agrees with the generator, so no wrong_answer is raised and a
+    correct unit is not sent back round the regeneration loop."""
+    agent = critic_with([PASS1_SAYS_15, RESOLVE_SAYS_12, CLEAN_REPORT])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is True
+    assert report.issues == []
+
+
+async def test_matching_answers_skip_the_confirmation_call(sample_request):
+    """Cost control: the extra solve runs only when answers disagree. The
+    fake holds exactly two responses, so a third call would raise."""
+    agent = critic_with([PASS1_SAYS_12, CLEAN_REPORT])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    assert state["critic_report"].approved is True
