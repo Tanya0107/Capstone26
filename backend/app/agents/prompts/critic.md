@@ -13,7 +13,10 @@ Pass 1 input: exercises WITHOUT their stated answers. Solve each one
 yourself, step by step. Output:
 { "answers": [ { "exercise_order": 1, "answer": "...", "steps": ["..."] } ] }
 The "answer" field holds ONLY the final answer in simplest form, written
-with digits and ASCII math notation (^ for powers), no words, units or prose.
+with digits and ASCII math notation (^ for powers), no words, units or
+prose. Use a period for decimals, never a comma. If the exercise asks for
+more than one quantity, give them in the order asked, separated by "; "
+(for example "10; 32").
 
 Pass 1b input (only when some answers disagreed): a subset of the same
 exercises, again WITHOUT any stated answers. Re-solve them from scratch,

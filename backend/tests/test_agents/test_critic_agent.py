@@ -170,3 +170,39 @@ async def test_matching_answers_skip_the_confirmation_call(sample_request):
     state = {"request": sample_request, "lessons": lessons_with_answer("12")}
     state = await agent.run(state)
     assert state["critic_report"].approved is True
+
+
+async def test_model_raised_wrong_answer_dropped_when_guard_agreed(sample_request):
+    """Validation run finding: the critic's blind solve matched the stated
+    answer, then pass 2 invented a divergence anyway. The deterministic
+    comparison outranks that opinion, and a rejection whose only reason was
+    dropped becomes an approval rather than an empty regeneration request."""
+    invented = json.dumps({
+        "approved": False,
+        "issues": [
+            {"exerciseOrder": 1, "issueType": "wrong_answer", "detail": "invented"}
+        ],
+    })
+    agent = critic_with([PASS1_SAYS_12, invented])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.issues == []
+    assert report.approved is True
+
+
+async def test_model_raised_wrong_answer_kept_when_guard_disagreed(sample_request):
+    """The drop rule is narrow: it only applies where the independent solve
+    actually agreed. A real mismatch still rejects."""
+    flagged = json.dumps({
+        "approved": False,
+        "issues": [
+            {"exerciseOrder": 1, "issueType": "wrong_answer", "detail": "real"}
+        ],
+    })
+    agent = critic_with([PASS1_SAYS_15, RESOLVE_SAYS_15, flagged])
+    state = {"request": sample_request, "lessons": lessons_with_answer("12")}
+    state = await agent.run(state)
+    report = state["critic_report"]
+    assert report.approved is False
+    assert report.issues[0].issue_type == "wrong_answer"

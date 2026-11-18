@@ -34,17 +34,17 @@
     {
       "brief": "math_hard_percent_g6",
       "status": "ok",
-      "wall_seconds": 673.38,
+      "wall_seconds": 533.4,
       "critic_approved": false,
       "regeneration_cycles_used": 2,
-      "critic_issue_count": 3,
+      "critic_issue_count": 2,
       "stage_totals": {
-        "intake": 20.04,
-        "scope_sequence": 21.84,
-        "lesson_design": 451.44,
-        "assessment_design": 144.57,
-        "critic": 29.17,
-        "package": 6.31
+        "intake": 27.55,
+        "scope_sequence": 21.74,
+        "lesson_design": 301.58,
+        "assessment_design": 139.66,
+        "critic": 35.85,
+        "package": 7.0
       }
     }
   ]

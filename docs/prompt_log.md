@@ -73,6 +73,46 @@ truncation:
 Still open (raised to the team as Q11): gpt-4o's blind solves erred on
 2 of the 3 final flags of the difficulty 5 brief.
 
+## Iteration 4 -> 5 (validating D14 on live models, 2026-11-18)
+
+Re-ran the difficulty 5 brief, the one that motivated Q11. Run time fell
+from 673s to 533s and the confirmation re-solve fired as designed, but
+the run still ended unapproved at the cap with 2 issues. Checking the
+final answers by hand changed the diagnosis:
+
+| Exercise | Stored answer | Truth | Critic verdict |
+|---|---|---|---|
+| #1 book price, +15% then -10% | 207 | 207 correct (200 x 1.15 x 0.9) | wrong_answer, and its detail claimed the stored answer was 198 |
+| #2 scholarship percent and count | 10; 32 | correct (0.4 x 0.25 = 10%, 320 x 0.1 = 32) | flagged in cycle 0 while the critic itself wrote that the answers match |
+| #5 which store is cheaper | חנות א'; 0.8 | neither, 0.85 x 0.8 = 0.68 equals a flat 32%, the two stores are identical | wrong_answer, and its own figure of 32.8% contradicts its own working |
+
+Three distinct findings:
+
+1. **D14 guarded only one of two paths to a wrong_answer.** The #1 flag
+   never came from the normalization guard, which saw 207 against the
+   critic's own 207 and agreed. It came from the critic model's pass 2
+   report inventing a divergence against its own solve. The confirmation
+   re-solve cannot catch that, because there was no guard mismatch to
+   confirm. Fixed by making the deterministic comparison outrank the
+   model opinion: a model raised wrong_answer is dropped when the
+   independent solve agreed on that exercise. Same principle as D14,
+   applied to the other path.
+2. **An empty rejection is broken behaviour.** Once the only stated
+   reason is dropped, approved False with zero issues would send lesson
+   design a regeneration request with nothing to fix, and its prompt
+   says to fix exactly the listed issues. That case now approves.
+3. **#5 is a genuinely flawed exercise, and flagging it was correct.**
+   Both stores give a 32% effective discount, so the question as posed
+   has no answer. Neither agent solved it correctly, but the critic was
+   right to refuse it. This is the loop working, not a false positive.
+   The generator prompt now prefers splitting multi part questions, and
+   both prompts fix the decimal separator and multi part format that
+   produced the #2 false positive in cycle 0.
+
+Still true after the fix: a critic that repeats its own arithmetic error
+in both blind solves keeps a false flag. D14 reduces that risk, it does
+not remove it. Step 5.4 measures what remains.
+
 ## Dev run evidence (2026-09-13)
 
 All records carry the DEV label (R1) and live in

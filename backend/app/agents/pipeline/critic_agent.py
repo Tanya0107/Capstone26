@@ -110,18 +110,27 @@ class CriticAgent(BaseAgent):
         own_answers = {a.exercise_order: a for a in pass1.answers}
 
         mismatches: dict[int, tuple[str, str]] = {}
+        # Exercises where the deterministic comparison positively agreed.
+        # The model may not raise wrong_answer against these, see below.
+        guard_cleared: set[int] = set()
         for exercise in exercises:
             own = own_answers.get(exercise.order)
-            # Only a decided mismatch counts, None defers to the pass 2 audit
-            if own is not None and answers_equivalent(
-                exercise.correct_answer, own.answer
-            ) is False:
+            if own is None:
+                continue
+            verdict = answers_equivalent(exercise.correct_answer, own.answer)
+            if verdict is False:
                 mismatches[exercise.order] = (exercise.correct_answer, own.answer)
+            elif verdict is True:
+                guard_cleared.add(exercise.order)
+            # None is undecidable and defers to the pass 2 audit
 
         if mismatches:
+            disputed = set(mismatches)
             mismatches = await self._confirm_mismatches(
                 system, state, exercises, mismatches
             )
+            # A rescued exercise is one the second solve agreed on
+            guard_cleared |= disputed - set(mismatches)
 
         pass2_content = json.dumps(
             {
@@ -146,6 +155,32 @@ class CriticAgent(BaseAgent):
         report = await self.call_json(
             system, pass2_content, state, CriticReport.model_validate
         )
+
+        # The critic's own blind solve already agreed with these answers, so a
+        # wrong_answer raised against them in pass 2 contradicts its own work.
+        # The deterministic comparison outranks the model opinion on numeric
+        # equality, which is the same principle as the D14 confirmation and
+        # closes the second path to a false wrong_answer.
+        kept_issues = []
+        for issue in report.issues:
+            if (
+                issue.issue_type == "wrong_answer"
+                and issue.exercise_order in guard_cleared
+            ):
+                logger.info(
+                    "Exercise %s: dropping a model raised wrong_answer, the "
+                    "independent solve agreed with the stated answer",
+                    issue.exercise_order,
+                )
+                continue
+            kept_issues.append(issue)
+        dropped = len(report.issues) - len(kept_issues)
+        report.issues = kept_issues
+        if dropped and not report.issues and not report.approved:
+            # Every stated reason was invalid. Rejecting with no issues would
+            # send lesson design a regeneration request with nothing to fix.
+            logger.info("All issues dropped, approving instead of an empty rejection")
+            report.approved = True
 
         flagged = {
             (issue.exercise_order, issue.issue_type) for issue in report.issues

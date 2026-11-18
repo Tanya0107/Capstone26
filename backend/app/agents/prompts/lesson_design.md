@@ -36,7 +36,10 @@ difficulty (1 easy to 5 hard).
 3. correctAnswer: for quantitative subjects the exact final answer in its
    simplest form, written with digits and standard notation only (for
    example 17/12, 56700, 1 5/12 or 200*(1-(p/100)^2)). No words, units or
-   explanation, reasoning belongs in scaffoldSteps. For open ended
+   explanation, reasoning belongs in scaffoldSteps. Use a period for
+   decimals, never a comma. If the exercise asks for more than one
+   quantity, give them in the order asked separated by "; ". Prefer
+   splitting a multi part question into separate exercises. For open ended
    subjects a model answer followed by 2 to 3 acceptance criteria the
    teacher can grade against.
 4. scaffoldSteps (FR10): 2 to 4 steps that break the task down without
