@@ -12,7 +12,7 @@
                     "generation"
                 ],
                 "summary": "Generate Curriculum",
-                "description": "Run the 6-stage pipeline via the Orchestrator and persist the draft.\n\nTODO Phase 3, Step 3.6:\n  1. context = await memory_bank.retrieve_context(request)   # RAG (FR6)\n  2. package = await orchestrator.run_pipeline(request, context)\n  3. module_key = save_curriculum_package(package)           # draft status\n  4. return package (with module_key + latency populated)",
+                "description": "Run the 6 stage pipeline via the Orchestrator and persist the draft.\n\nA teacher may only generate under their own key, so the module's\ncreatorTeacherKey always matches the caller the security rules will\ncheck on every later read.",
                 "operationId": "generate_curriculum_api_generation_post",
                 "parameters": [
                     {
@@ -722,7 +722,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Bertscoref1"
+                        "title": "Bertscoref1",
+                        "description": "Patched in after the response by the background scorer (D17)"
                     },
                     "rougeL": {
                         "anyOf": [
@@ -733,7 +734,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Rougel"
+                        "title": "Rougel",
+                        "description": "Inline ROUGE-L vs the nearest gold reference, Hebrew tokenizer"
                     },
                     "bleu": {
                         "anyOf": [
@@ -744,12 +746,37 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Bleu"
+                        "title": "Bleu",
+                        "description": "Offline harness only, not computed per request (D17)"
+                    },
+                    "referenceUnit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Referenceunit",
+                        "description": "Gold reference unit the similarity was measured against"
+                    },
+                    "referenceValidated": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Referencevalidated",
+                        "description": "False when that reference is still DRAFT, so scores are diagnostics only"
                     }
                 },
                 "type": "object",
                 "title": "QualityScores",
-                "description": "FR4 automated algorithmic scoring attached to every draft.\n\nNOTE: these are per draft diagnostics. The Phase B thresholds\n(BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are\nTARGETS, not results."
+                "description": "FR4 automated algorithmic scoring attached to every draft.\n\nNOTE: these are per draft diagnostics. The Phase B thresholds\n(BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are\nTARGETS, not results.\n\nA similarity score is meaningless without its reference, so the unit\nit was measured against travels with it, together with whether that\nunit is teacher validated. An unvalidated reference may back this\ndiagnostic but never a reported metric (R1), and the Review Dashboard\ncopy must say so."
             },
             "SocraticHint": {
                 "properties": {

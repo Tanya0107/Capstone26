@@ -10,7 +10,7 @@ subject type, reported per subject and overall.
 | FR1 | Teacher goals input | frontend app/teacher/create + GoalsForm; GenerationRequest |
 | FR2 | Auto curriculum generation | agents/orchestrator + agents/pipeline/* + agents/standards (MOE corpus, D4) |
 | FR3 | Agentic self-correction | agents/pipeline/critic_agent + answer_compare (normalization guard) + orchestrator loop + config.SUBJECT_TYPES (D8) |
-| FR4 | Automated quality scoring | app/evaluation/scoring (inline) + /evaluation (offline) |
+| FR4 | Automated quality scoring | app/evaluation/scoring (inline ROUGE-L with the Hebrew tokenizer, plus the post response BERTScore task that patches the module doc) + routes/generation + /evaluation (offline BLEU and reported metrics, Step 5.3) (D17) |
 | FR5 | Review Dashboard | app/teacher/review/[moduleId] + ReviewEditor |
 | FR6 | Semantic distance -> memory bank | core/memory_bank (ingest, retrieve, cold start seed) + routes/feedback + Firestore find_nearest with the vector index in firestore.indexes.json (D3) |
 | FR7 | Publish to distribution list | PublishModal + assignments collection |
@@ -22,7 +22,7 @@ subject type, reported per subject and overall.
 | FR13 | Feedback + progress history | ProgressSummary + compute_ngs |
 | NFR1 | UI < 2s | Next.js SSR/CSR split; Lighthouse check (Phase 5) |
 | NFR2a | Tutor turn <= 15s | tutoring/socratic_agent deadline + settings.tutor_turn_timeout_seconds (D13) |
-| NFR2b | Generation <= 900s | orchestrator budget + latency field + p95 evidence (D13) |
+| NFR2b | Generation <= 900s | orchestrator budget + latency field + routes/generation 504 mapping + scripts/dev_latency_runs (DEV p50/p95 evidence) (D13) |
 | NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere |
 | NFR4 | RBAC | firestore.rules + rules.test.ts + api/deps + ProtectedRoute |
 | NFR5 | Telemetry anonymization | telemetryEvents keys-only design |

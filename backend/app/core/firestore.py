@@ -116,6 +116,18 @@ def save_curriculum_package(package: CurriculumPackage, teacher_key: str) -> str
     return module_ref.id
 
 
+def patch_module_quality_scores(module_key: str, scores: dict) -> None:
+    """Merge scores into a persisted module's qualityScores map (FR4).
+
+    Used by the post response BERTScore task (D17). Dotted field paths
+    update single map keys, so a late arriving BERTScore cannot overwrite
+    the ROUGE-L the request already wrote.
+    """
+    db = get_db()
+    updates = {f"qualityScores.{key}": value for key, value in scores.items()}
+    db.collection("curriculumModules").document(module_key).update(updates)
+
+
 def append_telemetry_event(event: TelemetryEvent) -> None:
     """Append only write into telemetryEvents (NFR5, keys only, no PII)."""
     db = get_db()

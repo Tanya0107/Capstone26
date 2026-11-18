@@ -256,3 +256,96 @@ progressively instead of forwarding raw tokens. This costs the time to
 first token that NFR8 wanted, and keeps the FR11 invariant absolute. The
 alternative, streaming tokens live and checking as they arrive, cannot
 work: by the time a leak is detectable, the student has already read it.
+
+## Step 3.6 evidence, generation route and inline scoring (2026-11-19)
+
+Full stack run, teacher token from the Auth emulator through
+POST /api/generation on a live uvicorn to the Firestore emulator.
+Harness: `backend/scripts/dev_latency_runs.py`. Record:
+`evaluation/results/dev_runs/generation_latency.json`. DEV numbers, not
+evaluation results (R1).
+
+| Measure | Run 1, math_fractions_g5 |
+|---|---|
+| wall time, client side | 462.07s |
+| server reported latency | 459.71s |
+| NFR2b budget | 900s, within it |
+| response validates as CurriculumPackage | yes |
+| lessons / exercises | 3 / 6 |
+| inline ROUGE-L | 0.1919 vs unit_01_math_fractions_g5 |
+| reference validated | no, the unit is still DRAFT |
+| critic approved | no, 1 issue at the 2 cycle cap |
+| persistence checks | all passed |
+
+The persistence check is the part worth keeping. It reads the emulator
+back and asserts the D11 split holds in practice: 6 exercise docs, 6
+matching exerciseSolutions docs each with a correctAnswer, and no
+`correctAnswer` or `socraticHints` key on any student readable exercise
+doc. R6 calls a leak there a release blocker, so it is verified at the
+persistence layer and not only in the tutor.
+
+### Why rouge_score is not on the request path
+
+`rouge_score.rouge_scorer` imports nltk and numpy at module level, and
+nltk pulls scipy in behind it. None of that is used here: the Porter
+stemmer it wants is irrelevant because a custom tokenizer is passed
+instead. Measured on this machine, importing it took **571s** cold and
+the dependency chain stalled the first scoring test run past 300s without
+finishing. That import has no place inside a request.
+
+ROUGE-L is reimplemented directly instead, an LCS length over two token
+lists per Lin 2004. `test_matches_the_rouge_score_library` pins it against
+the library on 10 pairs including Hebrew, empty sides and a no overlap
+pair, so the inline diagnostic and the Phase 5 offline harness cannot
+drift. The scoring suite went from not finishing in 300s to **27 tests in
+0.15s**, and the parity test is the only one that pays the import.
+
+### The Hebrew tokenizer is not optional
+
+`rouge_score`'s default tokenizer replaces every non Latin character with
+a space, so Hebrew tokenizes to the empty list and every score would have
+been a silent 0.0, with no error to notice. That is now the first
+assertion in the scoring tests. Known limitation, recorded rather than
+hidden: Hebrew prefix letters stay attached to their word, so בשברים and
+שברים are separate tokens and matches are undercounted. The inline number
+is a conservative lower bound. Stemming is a Phase 5 question for
+compute_nlp_metrics.py, which owns the reported metric.
+
+### Observed, not acted on: a wrong_answer flag whose detail denies itself
+
+The run came back unapproved on one issue, exercise 5, whose stated answer
+is a categorical label plus a number, `מתכון ראשון; 9/8`. The critic's own
+detail text reads "Both answers are mathematically equivalent with
+different notations for the first part of the answer", while the issue
+type it emitted is `wrong_answer`. Both D14 guards passed it through,
+which means the deterministic comparison did not positively agree.
+
+Probing `answers_equivalent` with that stated answer against seven
+plausible phrasings of the same claim, exactly one returns False:
+
+    False   'מתכון 1; 9/8'        numeric [{1.0}, {1.125}]
+    True    'מתכון ראשון; 9/8'    numeric [{1.125}]
+    True    'המתכון הראשון; 9/8'  numeric [{1.125}]
+    True    'הראשון; 1.125'       numeric [{1.125}]
+    True    'מתכון א; 9/8'        numeric [{1.125}]
+
+So there is a real and specific defect: when one side writes an ordinal
+label as a digit and the other as a word, the digit becomes a phantom
+numeric value, and the rule that every independent value must appear in
+the stated answer then fails on a label rather than on arithmetic.
+
+Not fixed here, deliberately. Whether that is what produced this
+particular flag is unproven, because the critic's independent answer is
+not recorded anywhere, so the diagnosis above is a demonstrated mechanism
+and not a confirmed cause. Fixing it by discarding independent values the
+stated answer lacks would weaken the guard against genuine multi value
+errors, and an earlier dev run had a legitimate two value answer
+(`10; 32`), which is exactly the trade D14 refused to make. The harness
+now records `critic_issues` on every run so the next occurrence does not
+need a 460s rerun to inspect, and recording the critic's independent
+answer alongside a wrong_answer belongs with the Step 5.4 critic
+quantification D14 already points to.
+
+Nothing was lost to the teacher in the meantime: the package was returned
+with `approved: false` and the issue surfaced, which is the designed FR3
+behaviour at the regeneration cap, not a dropped draft.

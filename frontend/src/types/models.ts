@@ -174,6 +174,11 @@ export interface QualityScores {
   bertscoreF1?: number;
   rougeL?: number;
   bleu?: number;
+  // A similarity score is meaningless without its reference. referenceValidated
+  // is false while the gold unit is still DRAFT, and the Review Dashboard must
+  // label the score a diagnostic rather than a metric when it is (R1, D17).
+  referenceUnit?: string;
+  referenceValidated?: boolean;
 }
 
 export interface LessonUnit {

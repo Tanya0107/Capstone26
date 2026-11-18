@@ -24,28 +24,8 @@ async def test_timeout_raises_typed_error(sample_request):
         await run_pipeline(sample_request, rag_context=[], agents=agents, timeout_s=0.05)
 
 
-async def test_timeout_returns_504_body():
-    """The app converts GenerationTimeoutError to a machine readable 504.
-
-    The real generation route body lands in Step 3.6, so the handler is
-    exercised through a temporary route that raises the typed error.
-    """
-    from httpx import ASGITransport, AsyncClient
-
-    from app.main import app
-
-    @app.post("/test/generation-timeout")
-    async def raise_timeout():
-        raise GenerationTimeoutError("budget exceeded")
-
-    try:
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.post("/test/generation-timeout")
-        assert response.status_code == 504
-        assert response.json() == {"error": "generation_timeout", "retriable": True}
-    finally:
-        app.router.routes = [
-            r for r in app.router.routes
-            if getattr(r, "path", "") != "/test/generation-timeout"
-        ]
+# The 504 body used to be exercised here through a temporary route,
+# because the generation route was not implemented yet. Step 3.6 wired the
+# real one, so that assertion now lives in
+# tests/test_api/test_generation_endpoint.test_generation_timeout_504,
+# where a slow stage reaches the handler the way a request does.
