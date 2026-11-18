@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from typing import Optional
 
 import firebase_admin
 import google.auth.credentials
@@ -170,3 +171,37 @@ def count_feedback_memories(limit: int = 1) -> int:
     """Cheap emptiness probe for the cold start loader."""
     db = get_db()
     return sum(1 for _ in db.collection("feedbackMemoryBank").limit(limit).stream())
+
+
+def get_exercise_with_solution(exercise_key: str) -> Optional[dict]:
+    """Read one exercise joined with its teacher only solution (R6, D11).
+
+    This is the single server side path that reads correctAnswer and
+    socraticHints on a student's behalf. The Admin SDK bypasses the
+    security rules, which is exactly why the tutor runs here and never in
+    the student client. The joined dict must never be returned to a
+    student, only the generated hint is.
+    """
+    db = get_db()
+    exercise = db.collection("exercises").document(exercise_key).get()
+    if not exercise.exists:
+        return None
+    data = exercise.to_dict() or {}
+    data["exerciseKey"] = exercise_key
+    solution = db.collection("exerciseSolutions").document(exercise_key).get()
+    if solution.exists:
+        payload = solution.to_dict() or {}
+        data["correctAnswer"] = payload.get("correctAnswer", "")
+        data["socraticHints"] = payload.get("socraticHints", [])
+    else:
+        data.setdefault("correctAnswer", "")
+        data.setdefault("socraticHints", [])
+
+    module_key = data.get("moduleKey")
+    if module_key:
+        module = db.collection("curriculumModules").document(module_key).get()
+        if module.exists:
+            payload = module.to_dict() or {}
+            data["subject"] = payload.get("subject", "")
+            data["gradeLevel"] = payload.get("gradeLevel", "")
+    return data

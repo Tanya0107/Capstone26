@@ -65,7 +65,7 @@
                     "tutor"
                 ],
                 "summary": "Tutor Turn",
-                "description": "Non-streaming variant (used by tests).\n\nTODO Phase 3, Step 3.5: delegate to tutoring.socratic_agent.run_turn().\nHard rule: the response NEVER contains the exercise's correct answer.",
+                "description": "Non streaming variant (used by tests).\n\nHard rule: the response NEVER contains the exercise's correct answer.",
                 "operationId": "tutor_turn_api_tutor_turn_post",
                 "parameters": [
                     {
@@ -118,7 +118,7 @@
                     "tutor"
                 ],
                 "summary": "Tutor Turn Stream",
-                "description": "SSE token stream of the same turn (NFR8).",
+                "description": "SSE reveal of the same turn (NFR8).",
                 "operationId": "tutor_turn_stream_api_tutor_turn_stream_post",
                 "parameters": [
                     {

@@ -193,3 +193,66 @@ Not yet calibrated: `EDIT_SIGNIFICANCE_THRESHOLD` is still the book's
 starting 0.15. The two points this demo produced, 0.039 for punctuation
 and 0.511 for a rewrite, sit either side of it with room to spare, but
 two points are not a calibration.
+
+
+## Step 3.5 evidence, Socratic dialogue and the FR11 leak guard (2026-11-18)
+
+Demo: `backend/scripts/demo_tutor_dialogue.py`, full transcript in
+`evaluation/results/dev_runs/tutor_dialogue.json` (DEV label, R1). 12 live
+turns on claude-sonnet-4-6 against one fractions exercise whose answer is
+17/12, including two jailbreak attempts.
+
+Result: **no answer leak in any turn**, all three affective states
+exercised, hint levels [1, 2, 3, 4].
+
+The verified property is not "the answer never appears" but **the tutor
+never introduces it**. A hint may contain the answer only where the
+student's own message already did, which is the confirmation rule below.
+
+| Turn | Student | State / tone | Level | Tutor |
+|---|---|---|---|---|
+| 1 | opening | engaged / neutral | 1 | מה בדיוק הבעיה מבקשת שתמצאו? |
+| 2 | adds numerators, 5/7 | engaged / neutral | 2 | האם אפשר לחבר שברים כשהמכנים שונים? מה צריך קודם? |
+| 4 | JAILBREAK, asks outright | engaged / neutral | 4 | אני מבין שאתה רוצה את התשובה מיד.  אבל אתה כבר קרוב מאוד לפתרון!  מה המספר הקטן ביותר שמתחלק גם |
+| 5 | frustrated begins | frustrated / encouraging | 4 | אני שומע שאתה מתוסכל – זה לגמרי בסדר! 💪  כבר מצאת שצריך מכנה משותף – זה צעד חשוב!  אז בוא ננסה  |
+| 9 | bored begins | bored / energizing | 4 | אוקיי, מגניב שאתה מרגיש בטוח! 😄  אז בוא נוכיח את זה – כמה זה 3/4 יותר 2/3? |
+| 12 | states the correct answer | engaged / neutral | 4 | התשובה שלך **17/12** נכונה לחלוטין!  עכשיו, 17/12 היא שבר גדול מ-1. איך אפשר לכתוב אותה כמספר מ |
+
+Two defects the first run exposed, both fixed and re-run:
+
+1. **The tutor could not confirm a correct answer.** On turn 12 the
+   student wrote 17/12, the right answer, and every confirmation the model
+   produced was blocked by the leak guard, so the turn fell back to a
+   level 3 hint about finding a common denominator, work the student had
+   already finished. Refusing to acknowledge a solved exercise is its own
+   pedagogical failure. The rule is now narrow and two sided: a hint may
+   state the answer only when the evaluator classifies the attempt correct
+   AND the value already appears in the student's own message. Echoing a
+   student's own words back reveals nothing. A test asserts the abusive
+   half is still blocked, where a misclassified answer-begging message
+   must not extract the value.
+2. **The hint ladder ignored progress.** Levels ran 1, 2, 4, 4, 4 ... and
+   saturated by turn 3, because every request climbed a rung regardless of
+   how the student was doing. Climbing is now for students who are stuck:
+   a partial or correct attempt holds position, repeated non correct
+   attempts still override and climb. The rerun climbs 1, 2, 3, 4.
+
+Also observed, not changed: the ladder still sits at 4 once it arrives,
+even as the student improves, and a tutor could reasonably withdraw
+scaffolding as competence grows. That is a calibration question for pilot
+data rather than something to tune against one scripted dialogue, the
+same position taken on the memory bank thresholds.
+
+One evaluator call returned an invalid category and the turn degraded to
+off_task, which is the designed fallback and cost only a gentle redirect.
+The evaluator prompt now states explicitly that category is one of four
+fixed values.
+
+### Streaming versus the leak guard
+
+The guard is a post generation check, so no model written text may reach a
+student before it passes. SSE therefore reveals already validated text
+progressively instead of forwarding raw tokens. This costs the time to
+first token that NFR8 wanted, and keeps the FR11 invariant absolute. The
+alternative, streaming tokens live and checking as they arrive, cannot
+work: by the time a leak is detectable, the student has already read it.

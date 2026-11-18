@@ -212,3 +212,17 @@ def answers_equivalent(expected: str, actual: str) -> bool | None:
     # Categorical or verbose answers the guard cannot read reliably, the
     # critic's pass 2 audit decides these
     return None
+
+
+def numeric_values(text: str) -> list[set[float]]:
+    """Numeric readings of every number in a text, after normalization.
+
+    Shared with the FR11 answer leak guard so the tutor recognises the same
+    notations the critic does, a hint saying 1 5/12 leaks an answer of 17/12.
+    """
+    return _numeric_tokens(_clean(text))
+
+
+def values_overlap(left: list[set[float]], right: list[set[float]]) -> bool:
+    """True when any value on the left matches any value on the right."""
+    return any(_tokens_match(a, b) for a in left for b in right)

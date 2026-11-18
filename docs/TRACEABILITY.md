@@ -17,11 +17,11 @@ subject type, reported per subject and overall.
 | FR8 | Telemetry aggregation + dashboards | routes/analytics + core/telemetry + AnalyticsDashboard |
 | FR9 | Browse/select/launch programs | app/student/dashboard + listenToAssignments |
 | FR10 | Workspace + scaffolding | workspace page + ExerciseCard + ScaffoldingSteps |
-| FR11 | Socratic bot, no answers | agents/tutoring/* + SocraticBot + leak-guard test + exerciseSolutions split (D11, firestore.rules + rules.test.ts) |
-| FR12 | Affective state detection | adaptive_strategy + lib/firebase/telemetry |
+| FR11 | Socratic bot, no answers | agents/tutoring/socratic_agent + answer_leak guard + question_generator ladder + SocraticBot + adversarial leak tests + exerciseSolutions split (D11, firestore.rules + rules.test.ts) |
+| FR12 | Affective state detection | tutoring/adaptive_strategy (documented heuristics over ATT/HSR/idle) + lib/firebase/telemetry |
 | FR13 | Feedback + progress history | ProgressSummary + compute_ngs |
 | NFR1 | UI < 2s | Next.js SSR/CSR split; Lighthouse check (Phase 5) |
-| NFR2a | Tutor turn <= 15s | tutoring/socratic_agent + settings.tutor_turn_timeout_seconds (D13) |
+| NFR2a | Tutor turn <= 15s | tutoring/socratic_agent deadline + settings.tutor_turn_timeout_seconds (D13) |
 | NFR2b | Generation <= 900s | orchestrator budget + latency field + p95 evidence (D13) |
 | NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere |
 | NFR4 | RBAC | firestore.rules + rules.test.ts + api/deps + ProtectedRoute |
