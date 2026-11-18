@@ -76,8 +76,9 @@ Still open (raised to the team as Q11): gpt-4o's blind solves erred on
 ## Dev run evidence (2026-09-13)
 
 All records carry the DEV label (R1) and live in
-`evaluation/results/dev_runs/`. The NFR2 15s budget was overridden for
-these runs so real latency could be measured, see Q10.
+`evaluation/results/dev_runs/`. The then configured 15s budget was
+overridden for these runs so real latency could be measured. That
+measurement is what drove the NFR2 re-scope in D13.
 
 | Brief | Critic mode | Prompts | Wall time | Regeneration cycles | Final critic verdict |
 |---|---|---|---|---|---|

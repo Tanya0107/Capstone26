@@ -5,5 +5,6 @@ bleu: 0.40
 car_percent: 70
 irr_fleiss_kappa: 0.75
 ngs: 0.30
-generation_latency_seconds_p95: 15   # NFR2
+generation_latency_seconds_p95: 900  # NFR2b, re-scoped per D13
+tutor_turn_latency_seconds_p95: 15   # NFR2a, the original 15s figure
 uptime_percent: 99.5                 # NFR6

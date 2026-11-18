@@ -1,8 +1,10 @@
 """POST /api/generation — teacher goals in, CurriculumPackage JSON out (FR1–FR4).
 
 Contract (Phase 2): request = GenerationRequest, response = CurriculumPackage.
-NFR2: end-to-end (generate + score + self-correct) must complete within 15s
-for 95% of requests — the orchestrator enforces the budget internally.
+NFR2b (re-scoped, D13): end-to-end (generate + score + self-correct) must
+complete within settings.generation_timeout_seconds for 95% of requests,
+the orchestrator enforces the budget internally. The original single 15s
+NFR2 now applies to the interactive tutor turn (NFR2a).
 """
 from fastapi import APIRouter, Depends
 

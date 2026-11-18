@@ -21,7 +21,8 @@ subject type, reported per subject and overall.
 | FR12 | Affective state detection | adaptive_strategy + lib/firebase/telemetry |
 | FR13 | Feedback + progress history | ProgressSummary + compute_ngs |
 | NFR1 | UI < 2s | Next.js SSR/CSR split; Lighthouse check (Phase 5) |
-| NFR2 | Generation <= 15s | orchestrator budget + latency field + p95 evidence |
+| NFR2a | Tutor turn <= 15s | tutoring/socratic_agent + settings.tutor_turn_timeout_seconds (D13) |
+| NFR2b | Generation <= 900s | orchestrator budget + latency field + p95 evidence (D13) |
 | NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere |
 | NFR4 | RBAC | firestore.rules + rules.test.ts + api/deps + ProtectedRoute |
 | NFR5 | Telemetry anonymization | telemetryEvents keys-only design |

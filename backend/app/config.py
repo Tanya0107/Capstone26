@@ -27,8 +27,12 @@ class Settings(BaseSettings):
     firestore_emulator_host: str = "localhost:8080"
     firebase_auth_emulator_host: str = "localhost:9099"
 
-    # NFR2 budget: generation plus scoring plus self correction within 15s
-    generation_timeout_seconds: int = 15
+    # NFR2 budgets, re-scoped per D13. NFR2a is the interactive student
+    # facing tutor turn, a single short call. NFR2b is curriculum
+    # generation, 7 sequential model calls plus the FR3 self correction
+    # loop, which measured 253s to 673s in the Step 3.3 dev runs.
+    generation_timeout_seconds: int = 900
+    tutor_turn_timeout_seconds: int = 15
     max_critic_regeneration_cycles: int = 2
 
     frontend_origin: str = "http://localhost:3000"
