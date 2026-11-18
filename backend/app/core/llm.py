@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+from functools import lru_cache
 from typing import AsyncIterator, Optional, Protocol
 
 from app.config import get_settings
@@ -167,11 +168,15 @@ ROLE_TO_SETTING = {
 }
 
 
-def get_chat_model(role: str) -> ResilientChatModel:
-    """Return the configured resilient model for a pipeline role.
+@lru_cache(maxsize=None)
+def _build_chat(role: str) -> tuple:
+    """Construct and cache the provider client for a role.
 
-    role is one of generator, critic, tutor, tutor_fallback. All generation
-    prompts must instruct Hebrew output (D5), that lives in the prompt files.
+    Client construction is expensive and fully synchronous, so doing it
+    inside a request blocks the event loop. A blocked loop cannot run the
+    asyncio timeout in ResilientChatModel, which would let a call run past
+    the NFR2 budget unchecked. Cached per process and warmed at startup.
+    Returns (chat, json_bind_kwargs).
     """
     settings = get_settings()
     if role not in ROLE_TO_SETTING:
@@ -211,7 +216,38 @@ def get_chat_model(role: str) -> ResilientChatModel:
         )
         json_bind_kwargs = {"response_format": {"type": "json_object"}}
 
+    return chat, json_bind_kwargs
+
+
+def get_chat_model(role: str) -> ResilientChatModel:
+    """Return the configured resilient model for a pipeline role.
+
+    role is one of generator, critic, tutor, tutor_fallback. All generation
+    prompts must instruct Hebrew output (D5), that lives in the prompt files.
+    The provider client is cached, the wrapper is new on every call so per
+    call state such as last_usage is never shared between requests.
+    """
+    chat, json_bind_kwargs = _build_chat(role)
     return ResilientChatModel(LangChainChatModel(chat, json_bind_kwargs))
+
+
+@lru_cache(maxsize=1)
+def _embeddings_client():
+    """Cached embeddings client, same reasoning as _build_chat."""
+    from openai import AsyncOpenAI
+
+    return AsyncOpenAI(api_key=get_settings().openai_api_key or "not-set")
+
+
+def warm_models(roles: tuple[str, ...] = ("generator", "critic")) -> None:
+    """Build every provider client ahead of the first request.
+
+    Called from the app lifespan so construction cost is paid at startup
+    instead of inside a request, where it would block the event loop.
+    """
+    for role in roles:
+        _build_chat(role)
+    _embeddings_client()
 
 
 def l2_normalize(vectors: list[list[float]]) -> list[list[float]]:
@@ -226,20 +262,32 @@ def l2_normalize(vectors: list[list[float]]) -> list[list[float]]:
 EMBED_BATCH_SIZE = 128
 
 
-async def embed(texts: list[str]) -> list[list[float]]:
+async def embed(
+    texts: list[str], *, timeout_s: Optional[float] = None
+) -> list[list[float]]:
     """Embedding call for the Feedback Memory Bank (FR6) and RAG retrieval.
 
-    Batches requests and L2 normalizes the result (D2).
+    Batches requests and L2 normalizes the result (D2). timeout_s bounds
+    the whole batched call, the memory bank passes the remaining NFR2
+    budget so embeddings cannot stall a generation request.
     """
     settings = get_settings()
-    from openai import AsyncOpenAI
+    client = _embeddings_client()
 
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    vectors: list[list[float]] = []
-    for start in range(0, len(texts), EMBED_BATCH_SIZE):
-        batch = texts[start : start + EMBED_BATCH_SIZE]
-        response = await client.embeddings.create(
-            model=settings.embedding_model, input=batch
-        )
-        vectors.extend(item.embedding for item in response.data)
+    async def _run() -> list[list[float]]:
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), EMBED_BATCH_SIZE):
+            batch = texts[start : start + EMBED_BATCH_SIZE]
+            response = await client.embeddings.create(
+                model=settings.embedding_model, input=batch
+            )
+            vectors.extend(item.embedding for item in response.data)
+        return vectors
+
+    try:
+        vectors = await asyncio.wait_for(_run(), timeout=timeout_s)
+    except (asyncio.TimeoutError, TimeoutError) as exc:
+        raise LLMTimeoutError(
+            f"Embedding call exceeded the remaining budget of {timeout_s}s"
+        ) from exc
     return l2_normalize(vectors)

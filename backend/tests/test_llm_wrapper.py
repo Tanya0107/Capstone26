@@ -96,3 +96,29 @@ def test_l2_normalize():
     assert unit == pytest.approx([0.6, 0.8])
     [zero] = l2_normalize([[0.0, 0.0]])
     assert zero == [0.0, 0.0]
+
+
+def test_chat_client_cached_but_wrapper_is_fresh():
+    """Expensive provider construction happens once, while each caller gets
+    its own wrapper so per call state is never shared between requests."""
+    first = get_chat_model("generator")
+    second = get_chat_model("generator")
+    assert first is not second
+    assert first.inner.chat is second.inner.chat
+
+
+async def test_embed_respects_timeout(monkeypatch):
+    """Embeddings sit on the request path in the memory bank (FR6), so a
+    stalled call must surface as a typed timeout, not hang the request."""
+    from app.core import llm
+
+    class SlowEmbeddings:
+        async def create(self, **kwargs):
+            await asyncio.sleep(1.0)
+
+    class SlowClient:
+        embeddings = SlowEmbeddings()
+
+    monkeypatch.setattr(llm, "_embeddings_client", lambda: SlowClient())
+    with pytest.raises(LLMTimeoutError):
+        await llm.embed(["x"], timeout_s=0.05)
