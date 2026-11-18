@@ -279,7 +279,9 @@ async def embed(
         for start in range(0, len(texts), EMBED_BATCH_SIZE):
             batch = texts[start : start + EMBED_BATCH_SIZE]
             response = await client.embeddings.create(
-                model=settings.embedding_model, input=batch
+                model=settings.embedding_model,
+                input=batch,
+                dimensions=settings.embedding_dimensions,
             )
             vectors.extend(item.embedding for item in response.data)
         return vectors

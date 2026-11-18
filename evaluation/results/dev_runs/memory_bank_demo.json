@@ -1,0 +1,28 @@
+{
+  "label": "DEV evidence, not an evaluation result (R1)",
+  "timestamp": "2026-11-18T13:10:24.032000+00:00",
+  "embedding_model": "text-embedding-3-large",
+  "embedding_dimensions": 1536,
+  "threshold": 0.15,
+  "cold_start_seeded": 1,
+  "context_before_edit": [
+    "העדפת עריכה קודמת של מורה (מרחק 0.32):\nיחידת ייחוס מאושרת במקצוע math, כיתה 5: «מסע אל עולם השברים: מהמטבח אל המפה».\nהמורה העדיף: סגנון חקר מבוסס הקשר מהחיים, כמו ביחידה הזו.\nהעדיפו סגנון דומה."
+  ],
+  "trivial_edit": {
+    "distance": 0.0393,
+    "stored": false
+  },
+  "substantive_edit": {
+    "distance": 0.5108,
+    "stored": true,
+    "memory_id": "QIqMoGvbZRIUm3EO4pUC"
+  },
+  "context_after_edit": [
+    "העדפת עריכה קודמת של מורה (מרחק 0.32):\nיחידת ייחוס מאושרת במקצוע math, כיתה 5: «מסע אל עולם השברים: מהמטבח אל המפה».\nהמורה העדיף: סגנון חקר מבוסס הקשר מהחיים, כמו ביחידה הזו.\nהעדיפו סגנון דומה.",
+    "העדפת עריכה קודמת של מורה (מרחק 0.37):\nבמקום: חשבו כמה זה 3/4 ועוד 2/3.\nהמורה העדיף: הביאו מתכון אמיתי מהבית שמשתמש בשברים, הכינו אותו בכמות כפולה, ותעדו אילו שברים הייתם צריכים לחבר ואיך פתרתם זאת בפועל\nהעדיפו סגנון דומה."
+  ],
+  "edit_memory_rank": 2,
+  "control_unrelated_brief": [],
+  "control_contains_edit": false,
+  "acceptance_met": true
+}

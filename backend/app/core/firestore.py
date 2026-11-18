@@ -11,6 +11,8 @@ from functools import lru_cache
 
 import firebase_admin
 import google.auth.credentials
+from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
+from google.cloud.firestore_v1.vector import Vector
 from firebase_admin import credentials, firestore
 from google.cloud import firestore as google_firestore
 
@@ -125,13 +127,14 @@ def append_telemetry_event(event: TelemetryEvent) -> None:
 def save_feedback_memory(record: FeedbackMemoryRecord) -> str:
     """Store one teacher edit memory (FR6). Returns the new memoryId.
 
-    adapted_context_vector is stored as a plain array for now. Step 3.4
-    converts it to a Firestore Vector value with a single field vector
-    index for find_nearest (D3).
+    adapted_context_vector is stored as a Firestore Vector so find_nearest
+    can search it, backed by the single field vector index in
+    firebase/firestore.indexes.json (D3).
     """
     db = get_db()
     ref = db.collection("feedbackMemoryBank").document()
     doc = record.model_dump(by_alias=True, exclude={"memory_id", "created_at"})
+    doc["adaptedContextVector"] = Vector(record.adapted_context_vector)
     doc["createdAt"] = firestore.SERVER_TIMESTAMP
     ref.set(doc)
     return ref.id
@@ -140,19 +143,30 @@ def save_feedback_memory(record: FeedbackMemoryRecord) -> str:
 def fetch_similar_memories(vector: list[float], k: int = 5) -> list[dict]:
     """RAG retrieval for the Orchestrator (Fig 3, Memory Layer).
 
-    Interim metadata query, most recent k memories. Step 3.4 replaces this
-    with collection.find_nearest using COSINE distance on the stored vector
-    (docs/DECISIONS.md D3).
+    Firestore native vector search with COSINE distance (D3). The returned
+    distance is 1 minus cosine similarity, so smaller is more similar, the
+    same scale as the stored semanticDistance.
     """
     db = get_db()
-    query = (
-        db.collection("feedbackMemoryBank")
-        .order_by("createdAt", direction=firestore.Query.DESCENDING)
-        .limit(k)
+    query = db.collection("feedbackMemoryBank").find_nearest(
+        vector_field="adaptedContextVector",
+        query_vector=Vector(vector),
+        limit=k,
+        distance_measure=DistanceMeasure.COSINE,
+        distance_result_field="vectorDistance",
     )
     results = []
     for snap in query.stream():
         doc = snap.to_dict()
         doc["memoryId"] = snap.id
+        # The stored Vector is not JSON serializable and callers only need
+        # the text, drop it rather than leak it into prompt context
+        doc.pop("adaptedContextVector", None)
         results.append(doc)
     return results
+
+
+def count_feedback_memories(limit: int = 1) -> int:
+    """Cheap emptiness probe for the cold start loader."""
+    db = get_db()
+    return sum(1 for _ in db.collection("feedbackMemoryBank").limit(limit).stream())

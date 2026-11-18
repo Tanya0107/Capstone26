@@ -169,7 +169,7 @@
                     "feedback"
                 ],
                 "summary": "Ingest Edits",
-                "description": "TODO Phase 3, Step 3.4: distance = await memory_bank.ingest_teacher_edit(record)\nReturn FeedbackIngestResponse(semantic_distance=distance, stored=bool).",
+                "description": "Score the edit and store it when it is substantive (FR6).\n\nA teacher may only file edits under their own key, otherwise one\nteacher's style preferences would be attributed to another.",
                 "operationId": "ingest_edits_api_feedback_edits_post",
                 "parameters": [
                     {

@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     tutor_model: str = "claude-sonnet-4-6"
     tutor_fallback_model: str = "claude-haiku-4-5"
     embedding_model: str = "text-embedding-3-large"
+    # text-embedding-3-large emits 3072 dimensions by default, above the
+    # Firestore vector index ceiling (D3). text-embedding-3 models support
+    # requesting fewer dimensions, so D2 and D3 are reconciled here. Must
+    # match vectorConfig.dimension in firebase/firestore.indexes.json.
+    embedding_dimensions: int = 1536
 
     # Firebase
     firebase_project_id: str = ""

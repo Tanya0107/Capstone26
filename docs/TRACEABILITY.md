@@ -12,7 +12,7 @@ subject type, reported per subject and overall.
 | FR3 | Agentic self-correction | agents/pipeline/critic_agent + answer_compare (normalization guard) + orchestrator loop + config.SUBJECT_TYPES (D8) |
 | FR4 | Automated quality scoring | app/evaluation/scoring (inline) + /evaluation (offline) |
 | FR5 | Review Dashboard | app/teacher/review/[moduleId] + ReviewEditor |
-| FR6 | Semantic distance -> memory bank | core/memory_bank + routes/feedback |
+| FR6 | Semantic distance -> memory bank | core/memory_bank (ingest, retrieve, cold start seed) + routes/feedback + Firestore find_nearest with the vector index in firestore.indexes.json (D3) |
 | FR7 | Publish to distribution list | PublishModal + assignments collection |
 | FR8 | Telemetry aggregation + dashboards | routes/analytics + core/telemetry + AnalyticsDashboard |
 | FR9 | Browse/select/launch programs | app/student/dashboard + listenToAssignments |

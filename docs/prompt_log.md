@@ -150,3 +150,46 @@ Findings:
   for steps that do not solve the task. Whether an unsimplified
   intermediate is acceptable scaffolding is a pedagogy call for the
   teachers, so it is noted here rather than changed.
+
+
+## Step 3.4 evidence, Feedback Memory Bank adaptive behaviour (2026-11-18)
+
+Demo: `backend/scripts/demo_memory_bank.py`, evidence in
+`evaluation/results/dev_runs/memory_bank_demo.json` (DEV label, R1). Real
+text-embedding-3-large embeddings against the Firestore emulator.
+
+| Step | Result |
+|---|---|
+| Cold start from `evaluation/gold_standard` | 1 exemplar seeded |
+| Trivial edit, punctuation only | distance 0.039, NOT stored (threshold 0.15) |
+| Substantive rewrite by the teacher | distance 0.511, stored with its vector |
+| Similar but differently worded brief | 2 memories retrieved, the teacher edit among them |
+| Unrelated history brief, control | 0 memories retrieved |
+
+The acceptance bar is met: a similar brief retrieves the teacher's edit,
+and the match is semantic, the second brief shares no wording with the
+edit beyond the subject.
+
+Two things the demo changed in the implementation:
+
+1. **A relevance cutoff was missing.** `find_nearest` returns k results
+   however far away they are, so the first run handed the unrelated
+   history brief the math fractions memories at distances 0.66 and 0.74.
+   Injecting another subject's style into a brief is worse than injecting
+   nothing. Measured separation was clean, 0.32 to 0.37 for a matching
+   brief against 0.66 to 0.74 for an unrelated one, so
+   `MAX_RETRIEVAL_DISTANCE` is 0.50. Provisional and calibrated on one
+   demo, to be redone in Phase 5 on pilot memories like the ingest
+   threshold.
+2. **The rank 1 assertion was dropped.** The gold exemplar, a full
+   fractions unit, outranks one teacher edit for a fractions brief at
+   0.32 against 0.37. The guide asks that the retrieved context contain
+   the edit, which it does, and both reach the generator. Whether a real
+   teacher edit should outrank a seeded exemplar is a weighting question
+   worth revisiting once the pilot produces real edits, not something to
+   tune against a single demo.
+
+Not yet calibrated: `EDIT_SIGNIFICANCE_THRESHOLD` is still the book's
+starting 0.15. The two points this demo produced, 0.039 for punctuation
+and 0.511 for a rewrite, sit either side of it with room to spare, but
+two points are not a calibration.

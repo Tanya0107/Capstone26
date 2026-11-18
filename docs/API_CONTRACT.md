@@ -44,6 +44,11 @@ in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
 - Step 3.3: `CurriculumPackage.summary` (optional string) added — the
   Package Agent's short Hebrew teacher-guide summary. Mirrored in
   `models.ts`, frozen spec re-exported.
+- Step 3.4: no schema change. `POST /api/feedback/edits` gained its real
+  implementation, so only the endpoint `description` text moved and the
+  spec was re-exported. The route now also rejects an edit whose
+  `teacherKey` is not the caller's uid with 403, matching the ownership
+  rule the security rules apply to every other teacher-written collection.
 
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
