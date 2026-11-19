@@ -357,3 +357,201 @@ quantification D14 already points to.
 Nothing was lost to the teacher in the meantime: the package was returned
 with `approved: false` and the issue surfaced, which is the designed FR3
 behaviour at the regeneration cap, not a dropped draft.
+
+## Step 4.1 evidence, design tokens and app shell (2026-11-19)
+
+Phase 4 opens with a design pass, so the choices are recorded here and in
+D18 rather than left implicit in class names.
+
+Direction: warm academic. One token set lives in CSS variables in
+`frontend/src/styles/globals.css`, and `tailwind.config.ts` maps every
+color utility onto those variables through `rgb(var(--token) /
+<alpha-value>)`. The teacher theme is the default deep teal. `AppShell`
+sets `data-role="student"`, which re-points the same variables at warm
+amber and sand. The consequence worth stating: no screen names a color,
+so a screen written for one audience renders correctly for the other.
+Density, not hue, carries the rest of the split, `max-w-shell` with a
+tight rhythm for teachers against `max-w-reading` with an open one for
+students.
+
+Typefaces are Heebo for display and Assistant for body, both drawn as
+Hebrew families rather than Latin ones extended to Hebrew (D5). They load
+through `next/font`, which self hosts them at build time, so there is no
+third party request and no swap driven layout shift. Both are confirmed
+present in the installed `next` font data with the `hebrew` subset and the
+weights requested.
+
+### The staged loader shows estimates, and says so
+
+`LoadingIndicator` lists the six orchestrator stages and advances through
+them while a generation is in flight. The honest limit:
+`POST /api/generation` is a single request that returns the finished
+package, so the browser has no progress channel and cannot know the real
+server stage.
+
+The per stage durations are therefore estimates, but they are measured
+estimates, taken from the single pass stage timings already recorded in
+`evaluation/results/dev_runs/summary.json`:
+
+| Stage | math_fractions_g5 | math_hard_percent_g6 | Used |
+|---|---|---|---|
+| intake | 28.42s | 27.55s | 28s |
+| scope_sequence | 18.36s | 21.74s | 20s |
+| lesson_design | 84.99s | 102.83s | 94s |
+| assessment_design | 42.06s | 48.26s | 45s |
+| critic | 10.31s | 14.22s | 12s |
+| package | 7.70s | 7.00s | 7s |
+
+The UI shows no percentage and no countdown, because either would claim a
+precision the client does not have. It shows the stage list, which stage
+is active, and the real elapsed clock. When the estimated schedule runs
+out before the response arrives, the indicator stops advancing and says
+the critic asked for a revision, which is what is actually happening: the
+orchestrator has routed back to lesson design for up to two regeneration
+cycles (FR3). That is why the two measured runs above finished at 311.86s
+and 533.40s against a 206s single pass estimate. Replacing estimates with
+real stage events would mean streaming generation progress the way D15
+streams tutor turns, and that is not in Phase 4 scope.
+
+### RTL and comment style audits
+
+R10 asks for logical properties rather than physical ones. A grep for
+`pl-`, `pr-`, `ml-`, `mr-`, `rounded-l`, `rounded-r`, `border-l`,
+`border-r`, `text-left` and `text-right` across every `.tsx` in
+`frontend/src` returns nothing, so the whole frontend is currently clean,
+not only the files this step wrote.
+
+D7 forbids em dashes, arrows, ellipses and semicolons in comments. The
+skeleton imported in Step 0.1 carries nine such docstrings. The one in
+`LoadingIndicator.tsx` was rewritten with the file in this step. The other
+eight sit in component files that Steps 4.2 to 4.6 rewrite, so they are
+left for those steps rather than touched here to keep this commit to its
+own scope.
+
+### Two defects the build surfaced
+
+First, a duplicated landmark. `AppShell` owns the `main` element, and six
+stub pages inside the role shells still opened their own `<main
+className="p-8">`, so every authenticated page rendered two `main`
+landmarks nested inside each other. That is invalid HTML and hands
+assistive technology two document bodies. The shell introduced the
+conflict, so it was fixed here rather than deferred to the steps that own
+those pages, by replacing the inner element with a plain `div` and letting
+the shell supply the gutter. The pages themselves still say TODO and still
+belong to Steps 4.2 to 4.6.
+
+Second, the `next build` route table under-reports the shells. It credits
+`/teacher/dashboard` and `/student/dashboard` with 87.5 kB of First Load
+JS against 190 kB for `/login`, which would suggest the authenticated
+shells ship a third less JavaScript than the login screen. They do not.
+`.next/app-build-manifest.json` shows the Firebase chunks
+(`bc9e92e6`, `69806262`, `290`) attached to `/teacher/layout` rather than
+to the page, because `ProtectedRoute` and `NavBar` are imported by the
+layout. The browser loads layout chunks and page chunks together, so the
+real first load for a shell is close to the login figure. The number to
+cite for NFR1 is the Lighthouse measurement and the manifest, not that
+column.
+
+### Measuring the acceptance criteria, and a false alarm worth recording
+
+Two of the three Step 4.1 criteria are claims about computed style under
+real conditions, so they are measured in a browser rather than asserted
+from the stylesheet. Two harnesses do it, both in `frontend/scripts/`, both
+run against a production build with the emulators and seeded users up.
+Their tooling is installed with `npm i --no-save lighthouse puppeteer-core`
+so that CI, which runs `npm ci`, is unaffected.
+
+`lighthouse_shells.mjs` exists because a plain `lighthouse` command cannot
+measure these pages. Both shells sit behind `ProtectedRoute`, so an
+unauthenticated audit is redirected to `/login` and would quietly report a
+shell URL while scoring the login screen. The script signs in with
+puppeteer first and hands Lighthouse the same browser. Two consequences
+are recorded in the output rather than hidden. Lighthouse clears storage
+before a run by default, which would sign the browser out mid audit, so
+the shell runs set `disableStorageReset` and therefore describe a
+returning visitor, not a cold first visit. The `/login` run keeps the
+default and is the cold reference. The first version of this script also
+recorded the URL it requested rather than the one Lighthouse landed on,
+which is exactly the failure it was written to prevent, so it now records
+`finalDisplayedUrl`, probes the live DOM for the nav, the landmark count
+and the active role theme, and fails the gate when a run did not measure
+the shell.
+
+`a11y_shell_probe.mjs` drives real Tab presses, because `:focus-visible`
+only engages for keyboard focus and a scripted `element.focus()` would
+prove nothing about what a keyboard user sees. It also injects a span
+carrying `animate-breathe` and reads its computed animation under both
+motion preferences, since the breathing dot lives in `LoadingIndicator`
+and no screen mounts that until Step 4.2.
+
+The false alarm. For several iterations this probe reported that the
+teacher shell had no working tab order at all: every Tab press left
+`document.activeElement` on the body, while the student shell walked
+correctly. The DOM was not the cause. A diff of the two rendered documents
+showed only the expected differences, role attribute, nav label, density
+classes, two extra links and the TODO text, with no `inert`, no stray
+`tabindex` and no `aria-hidden`. All five teacher elements were visible,
+correctly positioned and focusable programmatically, and there were no
+console errors and no DOM mutations in the header. Reversing the probe
+order showed the failure followed the role rather than the position, which
+made it look real. Four isolated variants then passed on both roles,
+plain, after `bringToFront`, after seeding focus on the body, and after an
+explicit `focus()`, each walking the teacher order correctly as skip link,
+three nav links, sign out.
+
+The cause was the probe itself. It ran focus diagnostics before the walk,
+calling `focus()` on the body and on the first link to check whether focus
+was being stolen, and that manipulation left the sequential focus
+navigation starting point in a state where Tab reported no movement. The
+walk now runs first, on a page whose focus nothing has touched, and every
+other measurement runs after it. A prefetch hypothesis was tested along
+the way, since the teacher nav has three prefetchable links and the
+student nav has only its current route, and it was rejected: disabling
+prefetch changed nothing, and the change was reverted rather than left in
+as a cargo cult fix.
+
+Two guards were kept from the investigation. The walk now fails if it
+reports the same element twice, because counting a stuck tab order as
+several stops would turn it into a pass, and it must reach the sign out
+button. An earlier run did report eight stops that were all the same skip
+link while every assertion passed, which is the same class of defect as
+the Lighthouse URL gap above: a measurement that looks like evidence and
+is not.
+
+### Step 4.1 acceptance result
+
+Gate status: MET, with the content caveat stated below.
+
+| Target | Performance | Accessibility | Best practices | FCP | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| `/login`, cold | 100 | 100 | 100 | 0.2s | 0.6s | 0ms | 0 |
+| teacher shell | 100 | 100 | 100 | 0.4s | 0.6s | 0ms | 0 |
+| student shell | 100 | 100 | 100 | 0.4s | 0.6s | 0ms | 0 |
+
+Lighthouse 12.8.2, desktop form factor, local production build. Evidence in
+`evaluation/results/dev_runs/lighthouse_shells.json`. Each shell run carries
+the proof that it measured the shell and not a redirect: matching
+`finalDisplayedUrl`, the nav present, exactly one `main` landmark, the Hebrew
+skip link, and the role theme reading `teacher` or `student` respectively.
+A CLS of 0 is the self hosted font claim holding up, since a swapped webfont
+is the usual source of shift on a page like this.
+
+The honest reading of three perfect scores: this is a shell with stub pages
+inside it. The result says the chrome, the token layer and the font loading
+cost nothing measurable, which is worth knowing before Phase 4 builds on
+them, but it is not evidence about NFR1 on a populated screen. Steps 4.2 to
+4.6 add real content, Firestore listeners and SSE streaming, and the
+measurement is worth repeating then. That is why the results file carries
+`content_caveat` rather than leaving a reader to infer it.
+
+Keyboard focus and reduced motion, from
+`evaluation/results/dev_runs/a11y_shell_probe.json`:
+
+| Role | Tab order | Ring on every stop | Reduced motion |
+|---|---|---|---|
+| teacher | skip link, 3 nav links, sign out | 3px solid | 1.8s to 0.00001s, iteration count 1 |
+| student | skip link, 1 nav link, sign out | 3px solid | 1.8s to 0.00001s, iteration count 1 |
+
+The skip link is the first stop for both roles and its settled box is inside
+the viewport, so it is genuinely reachable rather than merely present. Both
+orders of the probe give the same result.

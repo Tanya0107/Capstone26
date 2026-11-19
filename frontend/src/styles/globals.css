@@ -2,4 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Phase 4: design tokens (colors, type scale) live here as CSS variables. */
+/* Design token layer, Step 4.1. Channels are space separated RGB so
+   tailwind.config.ts can apply alpha to any of them. */
+@layer base {
+  :root {
+    --ink: 21 36 31;
+    --ink-muted: 74 91 85;
+    --surface: 255 255 255;
+    --surface-sunken: 247 249 249;
+    --line: 217 226 223;
+
+    /* Teacher theme, the default. Deep teal reads as institutional
+       without the coldness of a navy LMS. */
+    --brand: 15 82 87;
+    --brand-strong: 11 62 66;
+    --brand-soft: 230 240 240;
+    --brand-contrast: 255 255 255;
+    --accent: 194 98 27;
+
+    --ok: 31 122 77;
+    --warn: 150 93 5;
+    --danger: 166 43 32;
+    --focus: 15 82 87;
+  }
+
+  /* Student theme. AppShell sets data-role, so the same utility classes
+     switch the whole surface to warm sand and amber. */
+  [data-role="student"] {
+    --surface-sunken: 253 248 241;
+    --line: 234 223 207;
+    --brand: 163 80 20;
+    --brand-strong: 129 62 14;
+    --brand-soft: 250 238 223;
+    --accent: 15 82 87;
+    --focus: 129 62 14;
+  }
+
+  html {
+    /* Hebrew needs a little more leading than the Tailwind default to
+       stay comfortable at body sizes (D5). */
+    line-height: 1.7;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--surface));
+    color: rgb(var(--ink));
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    line-height: 1.25;
+  }
+
+  /* Acceptance criterion for this step: focus is always visible. The ring
+     is driven by the role theme, so it stays legible on both palettes. */
+  :focus-visible {
+    outline: 3px solid rgb(var(--focus));
+    outline-offset: 2px;
+  }
+
+  /* Acceptance criterion for this step: reduced motion respected. Motion
+     is suppressed rather than removed so transition end handlers still
+     fire and nothing waits forever on an event that never arrives. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

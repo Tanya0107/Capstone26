@@ -20,7 +20,7 @@ subject type, reported per subject and overall.
 | FR11 | Socratic bot, no answers | agents/tutoring/socratic_agent + answer_leak guard + question_generator ladder + SocraticBot + adversarial leak tests + exerciseSolutions split (D11, firestore.rules + rules.test.ts) |
 | FR12 | Affective state detection | tutoring/adaptive_strategy (documented heuristics over ATT/HSR/idle) + lib/firebase/telemetry |
 | FR13 | Feedback + progress history | ProgressSummary + compute_ngs |
-| NFR1 | UI < 2s | Next.js SSR/CSR split; Lighthouse check (Phase 5) |
+| NFR1 | UI < 2s | Next.js SSR/CSR split; design tokens and self hosted fonts in tailwind.config.ts plus styles/globals.css (no third party font request, no swap shift); Lighthouse proxy on the shells (Step 4.1), full check in Phase 5 |
 | NFR2a | Tutor turn <= 15s | tutoring/socratic_agent deadline + settings.tutor_turn_timeout_seconds (D13) |
 | NFR2b | Generation <= 900s | orchestrator budget + latency field + routes/generation 504 mapping + scripts/dev_latency_runs (DEV p50/p95 evidence) (D13) |
 | NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere |
@@ -28,7 +28,8 @@ subject type, reported per subject and overall.
 | NFR5 | Telemetry anonymization | telemetryEvents keys-only design |
 | NFR6 | 99.5% uptime | /healthz + load-test monitoring (Phase 5) |
 | NFR7 | Graceful degradation | localStorage buffering + 504 handling |
-| NFR8 | Loading indicators | LoadingIndicator + SSE streaming |
+| D5, R10 | Hebrew RTL UI | app/layout.tsx (lang he, dir rtl, Heebo and Assistant via next/font) + AppShell role themes + logical property audit (Step 4.1) |
+| NFR8 | Loading indicators | LoadingIndicator staged over the six orchestrator stages, estimates taken from the measured DEV medians, with a regeneration hold state (D18) + SSE streaming |
 
 
 ## Use Case to FR to Implementation (Fig 1, revised model per D10)

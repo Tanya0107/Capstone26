@@ -6,5 +6,5 @@
  *  - Publish -> PublishModal: pick students -> create assignment (FR7).
  */
 export default function ReviewDashboardPage({ params }: { params: { moduleId: string } }) {
-  return <main className="p-8">TODO Phase 4, Step 4.3 — module: {params.moduleId}</main>;
+  return <div>TODO Phase 4, Step 4.3 — module: {params.moduleId}</div>;
 }

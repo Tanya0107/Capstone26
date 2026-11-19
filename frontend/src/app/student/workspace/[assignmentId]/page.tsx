@@ -5,5 +5,5 @@
  * NFR7: answers buffered to localStorage until server ack.
  */
 export default function WorkspacePage({ params }: { params: { assignmentId: string } }) {
-  return <main className="p-8">TODO Phase 4, Steps 4.4-4.6 — assignment: {params.assignmentId}</main>;
+  return <div>TODO Phase 4, Steps 4.4-4.6 — assignment: {params.assignmentId}</div>;
 }

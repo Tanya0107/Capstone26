@@ -5,5 +5,5 @@
  * (NFR8) -> on success route to /teacher/review/[moduleId].
  */
 export default function CreateEnrichmentPage() {
-  return <main className="p-8">TODO Phase 4, Step 4.2: GoalsForm + pipeline progress indicator</main>;
+  return <div>TODO Phase 4, Step 4.2: GoalsForm + pipeline progress indicator</div>;
 }
