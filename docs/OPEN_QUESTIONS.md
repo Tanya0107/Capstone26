@@ -15,5 +15,7 @@ Q9 (Phase 5) - Deployment target. Local demo only, or deployed (for example
 Vercel plus Cloud Run)? Affects the NFR6 uptime measurement methodology.
 
 Q10, Q11 and Q12 are resolved, see docs/DECISIONS.md D13, D14 and D12.
-D13 (the NFR2 re-scope) still needs advisor sign off because it changes a
-requirement set in the approved Phase A book.
+D13 (the NFR2 re-scope) was accepted on 2026-11-19. It still changes a
+requirement set in the approved Phase A book, so the deviation and its
+rationale belong in the Phase B book and the defense slides, stated
+outright. No open question remains.
