@@ -55,6 +55,11 @@ TEACHER_PASSWORD = "Demo1234"
 # should be recorded as a 504 from the server, not cut off by the client
 CLIENT_TIMEOUT_S = 1500.0
 
+# What BUILD_GUIDE Step 3.6 asks for. Carried into every summary so a
+# partial campaign can never be mistaken for a met gate, and so the
+# status corrects itself as runs accumulate across sessions.
+REQUIRED_RUNS_FOR_GATE = 10
+
 
 async def teacher_token(host: str) -> tuple[str, str]:
     """Sign in against the Auth emulator and return (id_token, uid).
@@ -255,6 +260,13 @@ def summarize(runs: list[dict], budget_s: int) -> dict:
         "maximum observed value, so it bounds this sample rather than "
         "estimating a population p95. Treat it as a DEV observation (R1)."
     )
+    met = len(latencies) >= REQUIRED_RUNS_FOR_GATE
+    summary["acceptance_gate"] = (
+        f"BUILD_GUIDE Step 3.6 asks for p50/p95 over {REQUIRED_RUNS_FOR_GATE} "
+        f"runs. {len(latencies)} successful run(s) recorded, so the gate is "
+        f"{'MET' if met else 'NOT MET'}."
+    )
+    summary["gate_met"] = met
     summary["all_responses_validated"] = all(
         r.get("response_validates") for r in runs if r.get("status") == "ok"
     )

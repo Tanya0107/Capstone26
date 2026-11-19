@@ -57,6 +57,8 @@
         "max_seconds": 462.07,
         "within_budget": 1,
         "percentile_method": "nearest rank over successful runs. With 10 samples the p95 is the maximum observed value, so it bounds this sample rather than estimating a population p95. Treat it as a DEV observation (R1).",
+        "acceptance_gate": "BUILD_GUIDE Step 3.6 asks for p50/p95 over 10 runs. 1 successful run(s) recorded, so the gate is NOT MET.",
+        "gate_met": false,
         "all_responses_validated": true,
         "all_persistence_checks_passed": true
       }

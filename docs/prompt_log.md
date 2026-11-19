@@ -265,6 +265,14 @@ Harness: `backend/scripts/dev_latency_runs.py`. Record:
 `evaluation/results/dev_runs/generation_latency.json`. DEV numbers, not
 evaluation results (R1).
 
+**Gate status: NOT MET.** Step 3.6 asks for p50/p95 over 10 runs and one
+is recorded. The percentiles below are a single observation, not a
+distribution. The harness accumulates runs across sessions and recomputes
+`acceptance_gate` in the results file on every write, so the status
+corrects itself when the campaign is finished rather than needing this
+note kept in sync. Everything else in the Step 3.6 acceptance item, the
+full stack path and the persistence verification, is met.
+
 | Measure | Run 1, math_fractions_g5 |
 |---|---|
 | wall time, client side | 462.07s |
