@@ -1,0 +1,143 @@
+{
+  "label": "DEV demo evidence, not an evaluation result (R1)",
+  "measures": "BUILD_GUIDE Step 4.2 acceptance, happy path and timeout path of the Goals screen through the real UI and backend",
+  "runs": {
+    "timeout": {
+      "mode": "timeout",
+      "timestamp": "2026-11-21T17:11:23.278Z",
+      "catalog_subjects": [
+        "history",
+        "math",
+        "science"
+      ],
+      "grades_offered_for_subject": [
+        "4",
+        "5",
+        "6"
+      ],
+      "form_before_submit": {
+        "subject": "math",
+        "grade": "5",
+        "goals": "להעמיק את תחושת השבר דרך הקשרים מהמטבח ומהחיים",
+        "standardsHint": "חיבור וחיסור שברים עם מכנים שונים",
+        "topics": [
+          "שברים",
+          "מכנה משותף"
+        ],
+        "difficulty": 3
+      },
+      "staged_loader_shown": true,
+      "loader_stages": [
+        "loading-stage-announcement",
+        "loading-stage-intake",
+        "loading-stage-scope_sequence",
+        "loading-stage-lesson_design",
+        "loading-stage-assessment_design",
+        "loading-stage-critic",
+        "loading-stage-package"
+      ],
+      "wall_seconds": 5.46,
+      "error_title": "היצירה חרגה ממסגרת הזמן",
+      "retry_offered": true,
+      "form_after_timeout": {
+        "subject": "math",
+        "grade": "5",
+        "goals": "להעמיק את תחושת השבר דרך הקשרים מהמטבח ומהחיים",
+        "standardsHint": "חיבור וחיסור שברים עם מכנים שונים",
+        "topics": [
+          "שברים",
+          "מכנה משותף"
+        ],
+        "difficulty": 3
+      },
+      "form_state_preserved": true,
+      "still_on_create_page": true,
+      "generation_status": 504,
+      "served_504": true,
+      "timeout_ui_shown": true,
+      "ok": true,
+      "generation_responses": [
+        {
+          "method": "OPTIONS",
+          "url": "http://localhost:8000/api/generation/subjects",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/generation/subjects",
+          "status": 200
+        },
+        {
+          "method": "OPTIONS",
+          "url": "http://localhost:8000/api/generation",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8000/api/generation",
+          "status": 504
+        }
+      ]
+    },
+    "happy": {
+      "mode": "happy",
+      "timestamp": "2026-11-21T17:06:26.848Z",
+      "catalog_subjects": [
+        "history",
+        "math",
+        "science"
+      ],
+      "grades_offered_for_subject": [
+        "4",
+        "5",
+        "6"
+      ],
+      "form_before_submit": {
+        "subject": "math",
+        "grade": "5",
+        "goals": "להעמיק את תחושת השבר דרך הקשרים מהמטבח ומהחיים",
+        "standardsHint": "חיבור וחיסור שברים עם מכנים שונים",
+        "topics": [
+          "שברים",
+          "מכנה משותף"
+        ],
+        "difficulty": 3
+      },
+      "staged_loader_shown": true,
+      "loader_stages": [
+        "loading-stage-announcement",
+        "loading-stage-intake",
+        "loading-stage-scope_sequence",
+        "loading-stage-lesson_design",
+        "loading-stage-assessment_design",
+        "loading-stage-critic",
+        "loading-stage-package"
+      ],
+      "wall_seconds": 179.24,
+      "final_path": "/teacher/review/8RVqoallf52n5MkHmltE",
+      "module_key": "8RVqoallf52n5MkHmltE",
+      "routed_to_review": true,
+      "ok": true,
+      "generation_responses": [
+        {
+          "url": "http://localhost:8000/api/generation/subjects",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8000/api/generation/subjects",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8000/api/generation",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8000/api/generation",
+          "status": 200
+        }
+      ]
+    }
+  },
+  "acceptance_gate": "Both the happy path and the timeout path were demonstrated end to end, so the gate is MET.",
+  "gate_met": true
+}

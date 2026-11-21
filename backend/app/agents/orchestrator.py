@@ -3,7 +3,9 @@
 Responsibilities:
   * Sequence the 6 stage curriculum pipeline as a LangGraph state machine.
   * Enforce the NFR2 budget with a hard asyncio timeout and expose the
-    remaining budget so stages can pass it to core.llm.
+    remaining budget so stages can pass it to core.llm. An overrun raises
+    GenerationTimeoutError whether it trips the outer timer or an
+    individual model call, so the route has one 504 path (NFR7).
   * Run the FR3 self correction loop: on critic rejection route back to
     lesson design with the CriticIssues attached, at most
     settings.max_critic_regeneration_cycles times. A rejection at the cap
@@ -27,6 +29,7 @@ from typing import Any, Optional, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app.config import get_settings
+from app.core.llm import LLMTimeoutError
 from app.core.schemas import (
     AssessmentBundle,
     CriticReport,
@@ -167,6 +170,19 @@ async def run_pipeline(
     except (asyncio.TimeoutError, TimeoutError) as exc:
         raise GenerationTimeoutError(
             f"Generation exceeded the {budget}s budget (NFR2)"
+        ) from exc
+    except LLMTimeoutError as exc:
+        # A budget overrun has two exits and both must become one 504.
+        # Every model call inside the pipeline is given the remaining run
+        # budget as its own timeout (agents/base.py), so a call that
+        # overruns and the outer wait_for above expire at the same instant,
+        # and which one raises first is a race. Letting this one through
+        # would surface as a bare 500 with no retriable flag, so the
+        # frontend's NFR7 degradation would work only on the coin flip
+        # where the outer timer won. Observed as a real 500 while demoing
+        # the Step 4.2 timeout path.
+        raise GenerationTimeoutError(
+            f"Generation exceeded the {budget}s budget inside a model call (NFR2)"
         ) from exc
 
     package = final_state["package"]

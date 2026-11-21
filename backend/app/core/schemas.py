@@ -63,6 +63,33 @@ class GenerationRequest(ApiModel):
     standards_hint: Optional[str] = None
 
 
+class SubjectOption(ApiModel):
+    """One subject the pipeline can actually serve (D8, FR1).
+
+    Servable means two corpora know it: the curated standards snapshot the
+    Intake Agent cites from, and the critic strategy map that picks between
+    an independent solve and claim verification. The Goals screen offers
+    only these, so the form cannot submit a request the route would reject.
+    """
+    subject: str
+    subject_type: str = Field(..., description="quantitative or open_ended, per SUBJECT_TYPES")
+    grades: list[str] = Field(
+        ...,
+        description="Grades this snapshot covers. A grade outside the list "
+        "would give the Intake Agent an empty standards slice",
+    )
+    draft_corpus: bool = Field(
+        False,
+        description="The standards snapshot is still pending team validation, "
+        "so a unit built on it is a draft and not evidence (R1)",
+    )
+
+
+class SubjectCatalog(ApiModel):
+    """Response of GET /api/generation/subjects, drives the FR1 form."""
+    subjects: list[SubjectOption] = Field(default_factory=list)
+
+
 # ------------------------------------------------- curriculum content (Fig 4)
 class SocraticHint(ApiModel):
     hint_order: int = Field(..., ge=1)

@@ -555,3 +555,194 @@ Keyboard focus and reduced motion, from
 The skip link is the first stop for both roles and its settled box is inside
 the viewport, so it is genuinely reachable rather than merely present. Both
 orders of the probe give the same result.
+
+## Step 4.2 evidence, teacher Goals screen (2026-11-21)
+
+### Why the form fetches its subjects instead of listing them
+
+The Goals form must respect two facts that only the backend knows, so it
+reads them from a new `GET /api/generation/subjects` rather than carrying
+its own list.
+
+Which subjects are servable is an intersection, not a list: a subject needs
+both a curated standards snapshot on disk and an entry in the critic
+strategy map (D8). `physics` is classified but ships no snapshot, so it is
+not servable, and the POST route rejects it with 422 after the teacher has
+filled the form in.
+
+The second fact is the dangerous one. The snapshots do not cover the same
+grades. Math and science cover 4 to 6 while history covers 6 to 8, and
+`load_standards` returns an *empty slice* for a grade outside its snapshot
+rather than raising. A teacher asking for history in grade 4 would
+therefore get a full run, minutes long, in which the Intake Agent had no
+standards to cite, and nothing anywhere would report an error. The grade
+select is driven per subject by the catalog so that combination cannot be
+submitted, and a test asserts every advertised grade yields a non empty
+slice.
+
+The endpoint is purely additive to the frozen Phase 2 contract: the
+re-exported spec diff shows zero removed lines. `draftCorpus` is carried
+through so the form says the snapshot is still awaiting team validation
+instead of presenting a draft as settled (R1), which it currently does for
+all three subjects.
+
+### A real NFR7 defect, found by demoing the timeout path
+
+The acceptance asks for the timeout path demoed against the real backend.
+Running it returned **500, not 504**, and the UI showed the generic server
+error rather than the timeout message with its retry.
+
+A budget overrun has two exits and only one was mapped. `run_pipeline`
+wraps the graph in `asyncio.wait_for` and converts its timeout into
+`GenerationTimeoutError`, which `app/main.py` turns into the
+`{"error": "generation_timeout", "retriable": true}` 504 the frontend
+degrades on. But `agents/base.py` also gives every model call the
+*remaining run budget* as its own timeout, so an overrun can instead
+surface as `LLMTimeoutError` from inside a stage. That escaped
+`run_pipeline` uncaught and became a bare 500 with no retriable flag.
+
+This is not an artifact of the tiny budget used to force it. Because the
+inner timeout is derived from the remaining budget, the model call and the
+outer timer expire at the same instant, so which one raises first is a
+race. NFR7's graceful degradation would have worked only on the coin flip
+where the outer timer won, and the existing 504 test only ever exercised
+that side. `run_pipeline` now maps `LLMTimeoutError` to
+`GenerationTimeoutError`, and a second endpoint test pins the other exit,
+asserting the same 504 body and that nothing was persisted and no scorer
+scheduled for a run that produced no package.
+
+### The demo harness passed on the wrong thing
+
+Worth recording because it is the third time in Phase 4 that a measurement
+looked like evidence and was not. The first version of
+`dev_goals_screen_demo.mjs` judged the timeout path by whether a retriable
+error appeared with the form state intact. Those were all true for the
+500, so it reported `ok: true` while the contract it existed to check was
+broken. It now requires the response to be a 504 and the visible error to
+be the timeout message specifically, not merely some retriable error.
+
+### Open defect: authenticated pages drop keystrokes
+
+Found while trying to fill the Goals form through the UI, chased to a clear
+scope but not to a root cause. It is not a Step 4.2 defect and it is not in
+the form code, so the step is delivered with it recorded rather than
+silently worked around.
+
+Symptom: on an authenticated page, an input accepts the first one to three
+characters and then stops. `document.activeElement` still reports the
+field, `document.hasFocus()` is true, the node is not replaced, there are
+no DOM mutations and no console errors, but native `keydown` stops firing
+on the element altogether. How many characters survive varies run to run.
+
+What it is not, each ruled out by measurement rather than reasoning:
+
+| Suspected | Result |
+|---|---|
+| Lifting form state to the page (NFR7) | Not it. A sibling input with purely local state fails the same way |
+| React controlled inputs | Not it. A vanilla non React input injected into the same page also fails |
+| `AppShell`, the nav or the skip link | Not it. Removing the shell made it worse, not better |
+| Next `<Link>` prefetch on the teacher nav | Not it. `prefetch={false}` changed nothing, and the change was reverted |
+| A headless browser artifact | Not it. A real headful Chrome window reproduces it |
+| `puppeteer` mixing `insertText` with key events | Not it. Pure ASCII through key events alone fails too |
+| An auth re render storm or a remount | Not it. Two `onIdTokenChanged` emissions and a single form mount during the failure |
+
+What it correlates with is being signed in. A vanilla input typed at 100ms
+intervals is perfect on `/login`, and fails on `/teacher/dashboard` and on
+`/student/dashboard`, neither of which contains a form at all. Those two
+shells are Step 4.1 work, so this predates Step 4.2.
+
+It also retroactively explains the Step 4.1 investigation recorded above,
+where the teacher shell appeared to have no working tab order while the
+student shell walked correctly. That was the same mechanism, key events not
+reaching the document, and the conclusion there that the tab order itself
+was sound still holds.
+
+Prime suspect, unproven: the authenticated pages are the only ones running
+the Firebase client with live emulator connections, and `useAuth` is
+subscribed three times over on a shell page, once each in `ProtectedRoute`,
+`NavBar` and the screen, so each page holds three independent
+`onIdTokenChanged` subscriptions that each call `getIdTokenResult`.
+Collapsing those into one shared auth context is the obvious next
+experiment and a good change on its own merits, but it is a guess until
+measured, and guessing is what produced the three rejected hypotheses
+above.
+
+Impact to judge before Phase 4 continues: if this reaches real users, a
+teacher typing goals would lose most of what they type, which would make
+FR1 unusable. It must be reproduced with real keyboard input in a browser
+a person is actually driving before being accepted as user facing, because
+every reproduction so far went through CDP key dispatch.
+
+### The dev proxy cannot carry a generation, measured at 30s
+
+The happy path failed its first attempt with a 500, and the backend log
+showed no completed POST at all. The Next log named the cause:
+`Failed to proxy http://localhost:8000/api/generation Error: socket hang up`.
+
+The rewrite in `next.config.mjs` has a hard timeout. Measured with a
+stand in server that answers after a requested delay, so it cost no model
+calls:
+
+| Upstream delay | Through the proxy |
+|---|---|
+| 10s | 200 after 10.01s |
+| 35s | 500 after 30.01s |
+| 65s | 500 after 30.00s |
+| 125s | 500 after 30.00s |
+
+Exactly 30.00s, every time. A generation runs 4 to 11 minutes, so through
+that proxy the FR1 happy path could never arrive, and neither could the
+NFR7 504: the proxy's own 500 replaces it long before the server's 900s
+budget expires. The earlier timeout demo passed only because the forced 5s
+budget let the backend answer inside the 30s window, which is a good
+illustration of why a passing test on a shortened budget is not evidence
+about the real one.
+
+`lib/api/generation.ts` now sends both generation calls straight to the
+backend origin through `NEXT_PUBLIC_BACKEND_ORIGIN`, falling back to the
+proxy when it is unset. CORS already allowed the frontend origin. The 30s
+limit is recorded as a comment in `next.config.mjs` so nobody routes long
+calls back through it. Short calls still use the proxy and the single
+origin it gives.
+
+Consequence worth knowing: calling the backend cross origin makes the
+browser send a CORS preflight, so each call now shows twice in a network
+trace, once as `OPTIONS` and once as the real method. The backend log
+confirms one `POST /api/generation` and one `OPTIONS /api/generation` per
+generation, not two generations.
+
+### A client disconnect does not cancel a generation
+
+The proxy aborted that first attempt at 30s and the teacher saw an error,
+but the backend kept working and persisted the draft anyway, at 17:01:56,
+about three minutes later. The module is in the emulator with no teacher
+ever having seen it.
+
+That is the correct behaviour to have noticed and the wrong behaviour to
+leave unexamined. Server side cancellation on client disconnect would
+waste the work already done, while persisting an orphan means a teacher who
+retried would find two drafts of the same brief. Neither is obviously
+right, and the Review Dashboard in Step 4.3 is where a teacher would
+encounter it, so the decision belongs there rather than being made silently
+here.
+
+### Step 4.2 acceptance result
+
+Gate status: MET. Evidence in
+`evaluation/results/dev_runs/goals_screen_demo.json`.
+
+| Path | Result |
+|---|---|
+| happy | `POST /api/generation` 200 in 179.24s, staged loader shown with all six stages, routed to `/teacher/review/8RVqoallf52n5MkHmltE` |
+| timeout | 504 with `retriable: true`, the timeout message shown rather than the generic server error, retry offered, still on the create page, form state fully preserved including both topic chips and the Hebrew free text |
+
+The persisted module was read back out of the emulator: correct title,
+subject, grade, `creatorTeacherKey` of `t1`, three lessons, and the five
+`qualityScores` keys. R6 was re-checked at the same time across all 15
+exercise docs, none of which carries `correctAnswer` or `socraticHints`.
+
+One caveat about the evidence file: the happy record was produced before
+the harness learned to record the request method, so it has no
+`generation_status` field, while the timeout record does. Its 200 is
+visible in that record's `generation_responses` list instead. The run was
+not repeated purely to even out a field name.

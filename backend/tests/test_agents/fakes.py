@@ -1,6 +1,7 @@
 """All fake pipeline agents for orchestrator graph tests (Step 3.2, R7)."""
 import asyncio
 
+from app.core.llm import LLMTimeoutError
 from app.core.schemas import (
     AssessmentBundle,
     CriticIssue,
@@ -82,6 +83,19 @@ class SlowStage:
     async def run(self, state: dict) -> dict:
         await asyncio.sleep(self.delay_s)
         return state
+
+
+class BudgetExhaustedStage:
+    """Raises the error a real stage raises when the run budget runs out.
+
+    agents/base.py gives every model call the remaining run budget as its
+    own timeout, so a genuine overrun surfaces as LLMTimeoutError from
+    inside a stage rather than as the orchestrator's outer asyncio timeout.
+    Both must degrade the same way (NFR7).
+    """
+
+    async def run(self, state: dict) -> dict:
+        raise LLMTimeoutError("LLM call exceeded the remaining budget of 0.01s")
 
 
 def fake_agents(critic_verdicts: list[bool]) -> dict:

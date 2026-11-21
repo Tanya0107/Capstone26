@@ -151,6 +151,23 @@ export interface GenerationRequest {
   standardsHint?: string;
 }
 
+// GET /api/generation/subjects. The Goals screen offers only servable
+// subjects, so the form cannot submit something the route would 422.
+// grades is per subject because the snapshots do not cover the same ones,
+// and a grade outside the list means an empty standards slice.
+export interface SubjectOption {
+  subject: string;
+  subjectType: string;
+  grades: string[];
+  // True while the standards snapshot is still pending team validation.
+  // The form must label the subject a draft rather than stay silent (R1).
+  draftCorpus: boolean;
+}
+
+export interface SubjectCatalog {
+  subjects: SubjectOption[];
+}
+
 export interface CriticIssue {
   exerciseOrder: number;
   issueType:

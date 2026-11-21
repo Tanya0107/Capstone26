@@ -7,7 +7,7 @@ subject type, reported per subject and overall.
 
 | Req | Description (short) | Where implemented |
 |---|---|---|
-| FR1 | Teacher goals input | frontend app/teacher/create + GoalsForm; GenerationRequest |
+| FR1 | Teacher goals input | frontend app/teacher/create + GoalsForm (controlled by the page so a 504 returns the filled form, NFR7) + GET /api/generation/subjects driving the subject and grade selects from the served corpus; GenerationRequest |
 | FR2 | Auto curriculum generation | agents/orchestrator + agents/pipeline/* + agents/standards (MOE corpus, D4) |
 | FR3 | Agentic self-correction | agents/pipeline/critic_agent + answer_compare (normalization guard) + orchestrator loop + config.SUBJECT_TYPES (D8) |
 | FR4 | Automated quality scoring | app/evaluation/scoring (inline ROUGE-L with the Hebrew tokenizer, plus the post response BERTScore task that patches the module doc) + routes/generation + /evaluation (offline BLEU and reported metrics, Step 5.3) (D17) |

@@ -69,6 +69,26 @@ in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
     critic strategy map at stage 5, which would waste minutes of
     generation on a request that cannot succeed.
 
+- Step 4.2: new endpoint `GET /api/generation/subjects`, returning
+  `SubjectCatalog` (a list of `SubjectOption`: `subject`, `subjectType`,
+  `grades`, `draftCorpus`). Purely additive, the frozen Phase 2 paths and
+  schemas are unchanged. Teacher auth, same as the POST.
+  It exists because the Goals screen must respect two facts that only the
+  backend knows. Which subjects are servable is the intersection of the
+  standards snapshots on disk and the critic strategy map, exactly the
+  pair the POST route checks before spending anything (D8). Which grades
+  are usable differs per subject, since the snapshots do not cover the
+  same range: math and science cover 4 to 6 while history covers 6 to 8.
+  A grade outside a snapshot is the dangerous case, because
+  `load_standards` returns an empty slice rather than raising, so the
+  Intake Agent would cite nothing and the run would produce a weak unit
+  with no error anywhere. Hardcoding either list in the frontend would
+  drift the moment a snapshot is added or extended, and the form would
+  then offer a combination the route rejects, or that silently empty
+  grade. `draftCorpus` is carried through so the form can say the
+  snapshot is still pending team validation instead of presenting a draft
+  as settled (R1). Mirrored in `models.ts`, frozen spec re-exported.
+
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
 The book's Fig 4 stores `correctAnswer` and `socraticHints` on the exercise

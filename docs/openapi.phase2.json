@@ -6,6 +6,49 @@
         "version": "0.1.0"
     },
     "paths": {
+        "/api/generation/subjects": {
+            "get": {
+                "tags": [
+                    "generation"
+                ],
+                "summary": "List Subjects",
+                "description": "Subjects and grades the Goals screen may offer (FR1, D8).\n\nThe form needs this because the two facts it must respect live in the\nbackend. Which subjects are servable is the intersection of the\nstandards snapshots on disk and the critic strategy map, exactly the\npair _validate_subject below checks. Which grades are usable differs\nper subject, since the snapshots do not cover the same range, and a\ngrade outside a snapshot yields an empty standards slice rather than an\nerror. Hardcoding either in the frontend would drift the moment a\nsnapshot is added or extended.\n\ndraft_corpus is carried through so the form can label a subject whose\nsnapshot is still pending team validation, instead of presenting a\ndraft as settled (R1).",
+                "operationId": "list_subjects_api_generation_subjects_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Authorization"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubjectCatalog"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/generation": {
             "post": {
                 "tags": [
@@ -860,6 +903,55 @@
                 ],
                 "title": "StudentAnalyticsRow",
                 "description": "Aggregates for one student in one assignment. Values are None until\nenough telemetry exists. Computation lands in Phase 5, Step 5.2."
+            },
+            "SubjectCatalog": {
+                "properties": {
+                    "subjects": {
+                        "items": {
+                            "$ref": "#/components/schemas/SubjectOption"
+                        },
+                        "type": "array",
+                        "title": "Subjects"
+                    }
+                },
+                "type": "object",
+                "title": "SubjectCatalog",
+                "description": "Response of GET /api/generation/subjects, drives the FR1 form."
+            },
+            "SubjectOption": {
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "title": "Subject"
+                    },
+                    "subjectType": {
+                        "type": "string",
+                        "title": "Subjecttype",
+                        "description": "quantitative or open_ended, per SUBJECT_TYPES"
+                    },
+                    "grades": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Grades",
+                        "description": "Grades this snapshot covers. A grade outside the list would give the Intake Agent an empty standards slice"
+                    },
+                    "draftCorpus": {
+                        "type": "boolean",
+                        "title": "Draftcorpus",
+                        "description": "The standards snapshot is still pending team validation, so a unit built on it is a draft and not evidence (R1)",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "subject",
+                    "subjectType",
+                    "grades"
+                ],
+                "title": "SubjectOption",
+                "description": "One subject the pipeline can actually serve (D8, FR1).\n\nServable means two corpora know it: the curated standards snapshot the\nIntake Agent cites from, and the critic strategy map that picks between\nan independent solve and claim verification. The Goals screen offers\nonly these, so the form cannot submit a request the route would reject."
             },
             "TeacherEditRecord": {
                 "properties": {

@@ -1,6 +1,8 @@
 """POST /api/generation, teacher goals in, CurriculumPackage JSON out (FR1 to FR4).
 
 Contract (Phase 2): request = GenerationRequest, response = CurriculumPackage.
+GET /api/generation/subjects was added post freeze for the Step 4.2 Goals
+screen, see docs/API_CONTRACT.md.
 NFR2b (re-scoped, D13): end to end (generate plus score plus self correct)
 must complete within settings.generation_timeout_seconds for 95% of
 requests, the orchestrator enforces the budget internally and
@@ -23,12 +25,21 @@ import asyncio
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from app.agents.orchestrator import run_pipeline
-from app.agents.standards.loader import UnknownSubjectError, available_subjects
+from app.agents.standards.loader import (
+    UnknownSubjectError,
+    available_subjects,
+    corpus_profile,
+)
 from app.api.deps import require_teacher
 from app.config import SUBJECT_TYPES, subject_type
 from app.core import memory_bank
 from app.core.firestore import save_curriculum_package
-from app.core.schemas import CurriculumPackage, GenerationRequest
+from app.core.schemas import (
+    CurriculumPackage,
+    GenerationRequest,
+    SubjectCatalog,
+    SubjectOption,
+)
 from app.evaluation.scoring import attach_bertscore, score_package
 
 router = APIRouter()
@@ -56,6 +67,40 @@ def _validate_subject(subject: str) -> None:
                 f"Available: {available_subjects()}"
             ),
         )
+
+
+@router.get("/subjects", response_model=SubjectCatalog)
+async def list_subjects(claims: dict = Depends(require_teacher)) -> SubjectCatalog:
+    """Subjects and grades the Goals screen may offer (FR1, D8).
+
+    The form needs this because the two facts it must respect live in the
+    backend. Which subjects are servable is the intersection of the
+    standards snapshots on disk and the critic strategy map, exactly the
+    pair _validate_subject below checks. Which grades are usable differs
+    per subject, since the snapshots do not cover the same range, and a
+    grade outside a snapshot yields an empty standards slice rather than an
+    error. Hardcoding either in the frontend would drift the moment a
+    snapshot is added or extended.
+
+    draft_corpus is carried through so the form can label a subject whose
+    snapshot is still pending team validation, instead of presenting a
+    draft as settled (R1).
+    """
+    options = [
+        SubjectOption(
+            subject=subject,
+            subject_type=SUBJECT_TYPES[subject],
+            grades=profile["grades"],
+            draft_corpus=profile["draft"],
+        )
+        for subject, profile in (
+            (subject, corpus_profile(subject))
+            for subject in available_subjects()
+            if subject in SUBJECT_TYPES
+        )
+        if profile["grades"]
+    ]
+    return SubjectCatalog(subjects=options)
 
 
 @router.post("", response_model=CurriculumPackage)
