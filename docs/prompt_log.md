@@ -621,18 +621,24 @@ error appeared with the form state intact. Those were all true for the
 broken. It now requires the response to be a 504 and the visible error to
 be the timeout message specifically, not merely some retriable error.
 
-### Open defect: authenticated pages drop keystrokes
+### Resolved: the keystroke drop was the harness, not the app
 
-Found while trying to fill the Goals form through the UI, chased to a clear
-scope but not to a root cause. It is not a Step 4.2 defect and it is not in
-the form code, so the step is delivered with it recorded rather than
-silently worked around.
+Found while trying to fill the Goals form through the UI. First recorded
+here as an open application defect that would make FR1 unusable. That
+conclusion was wrong, and the correction is kept in place rather than
+deleted, because the way it was reached is the point.
 
-Symptom: on an authenticated page, an input accepts the first one to three
-characters and then stops. `document.activeElement` still reports the
-field, `document.hasFocus()` is true, the node is not replaced, there are
-no DOM mutations and no console errors, but native `keydown` stops firing
-on the element altogether. How many characters survive varies run to run.
+Symptom as first recorded: on an authenticated page, an input accepts the
+first one to three characters and then stops. `document.activeElement`
+still reports the field, `document.hasFocus()` is true, the node is not
+replaced, there are no DOM mutations and no console errors, but native
+`keydown` stops firing on the element altogether.
+
+Measured again against a production build, the symptom is sharper than
+that. It is not a partial drop. **No trusted key event is delivered at
+all**, zero `keydown` on a capture phase `window` listener, while on
+`/login` in the same browser session the same probe records eight of
+eight.
 
 What it is not, each ruled out by measurement rather than reasoning:
 
@@ -642,9 +648,9 @@ What it is not, each ruled out by measurement rather than reasoning:
 | React controlled inputs | Not it. A vanilla non React input injected into the same page also fails |
 | `AppShell`, the nav or the skip link | Not it. Removing the shell made it worse, not better |
 | Next `<Link>` prefetch on the teacher nav | Not it. `prefetch={false}` changed nothing, and the change was reverted |
-| A headless browser artifact | Not it. A real headful Chrome window reproduces it |
+| A headless browser artifact | Partly it. Headful reproduces, but every reproduction went through CDP key dispatch, which is the actual variable |
 | `puppeteer` mixing `insertText` with key events | Not it. Pure ASCII through key events alone fails too |
-| An auth re render storm or a remount | Not it. Two `onIdTokenChanged` emissions and a single form mount during the failure |
+| An auth re render storm or a remount | Not it. Two `onIdTokenChanged` emissions and a single form mount during the failure, later confirmed by 0 blur events and 0 node swaps across 3s |
 
 What it correlates with is being signed in. A vanilla input typed at 100ms
 intervals is perfect on `/login`, and fails on `/teacher/dashboard` and on
@@ -657,21 +663,54 @@ student shell walked correctly. That was the same mechanism, key events not
 reaching the document, and the conclusion there that the tab order itself
 was sound still holds.
 
-Prime suspect, unproven: the authenticated pages are the only ones running
-the Firebase client with live emulator connections, and `useAuth` is
-subscribed three times over on a shell page, once each in `ProtectedRoute`,
-`NavBar` and the screen, so each page holds three independent
-`onIdTokenChanged` subscriptions that each call `getIdTokenResult`.
-Collapsing those into one shared auth context is the obvious next
-experiment and a good change on its own merits, but it is a guess until
-measured, and guessing is what produced the three rejected hypotheses
-above.
+The suspect named here first was three `useAuth` subscriptions per shell
+page. That was also wrong on its facts: `NavBar` does not call `useAuth`
+at all, so `/teacher/dashboard` holds exactly one subscription, and it
+fails. No fix was built on the guess.
 
-Impact to judge before Phase 4 continues: if this reaches real users, a
-teacher typing goals would lose most of what they type, which would make
-FR1 unusable. It must be reproduced with real keyboard input in a browser
-a person is actually driving before being accepted as user facing, because
-every reproduction so far went through CDP key dispatch.
+What settled it was measuring the channels around the keyboard instead of
+the keyboard, on `/teacher/create`, signed in, in one run:
+
+| Channel | Result |
+|---|---|
+| Trusted key events (`page.type`, `page.keyboard.press`, raw CDP `Input.dispatchKeyEvent`) | Nothing delivered. 0 `keydown` |
+| Trusted mouse events | Delivered. `mousedown` fires |
+| CDP `Input.insertText` | Delivered. Text lands in the field |
+| Focus stability, 30 samples over 3s | Textarea focused in 30 of 30, 0 `blur` events, 0 node swaps, same node throughout |
+| Frames | One. No iframe, in the document or in puppeteer's view |
+| Long tasks, console errors | None |
+
+No application mechanism can produce that combination. Page code cannot
+suppress a `keydown` that never arrives, and it is not a remount or stolen
+focus, because the field holds focus for the whole window with no blur and
+no node swap. A renderer that accepts mouse input and `insertText` is a
+live renderer. The missing channel is CDP key delivery to that tab, which
+belongs to the test rig.
+
+The confirmation from the other direction: `scripts/dev_goals_screen_demo.mjs`
+passes unchanged, today, against this build. It drives the form with native
+value setters and real clicks and never dispatches a key on an
+authenticated page, which is exactly the channel that works.
+
+Withdrawn: the claim that a teacher would lose most of what they type and
+that FR1 is unusable. There is no evidence for it. The honest residue is
+that the exact rig mechanism is unnamed, and that nobody has yet typed on a
+real keyboard on one of these pages. That check costs a person ten seconds
+and is still worth doing, but it is not a release blocker and it does not
+gate Phase 4.
+
+Rule this leaves for every later UI harness, and the reason Step 4.3 and
+Step 4.4 must not be written around `page.type`: text goes in through the
+native value setter plus an `input` event, the way `setField` does it, and
+clicks go in as real clicks. A harness that types on an authenticated page
+measures the rig, not the product.
+
+The Step 4.1 tab order investigation above was the same channel failing,
+so its conclusion that the tab order itself is sound still holds. The one
+check that would have caught this at the start, and that three rejected
+hypotheses did not include, was asking whether anything else about the page
+was unhealthy at the moment the keys vanished. Focus, mouse and the DOM
+were all fine, and that was knowable on day one.
 
 ### The dev proxy cannot carry a generation, measured at 30s
 
