@@ -11,9 +11,9 @@ subject type, reported per subject and overall.
 | FR2 | Auto curriculum generation | agents/orchestrator + agents/pipeline/* + agents/standards (MOE corpus, D4) |
 | FR3 | Agentic self-correction | agents/pipeline/critic_agent + answer_compare (normalization guard) + orchestrator loop + config.SUBJECT_TYPES (D8) |
 | FR4 | Automated quality scoring | app/evaluation/scoring (inline ROUGE-L with the Hebrew tokenizer, plus the post response BERTScore task that patches the module doc) + routes/generation + /evaluation (offline BLEU and reported metrics, Step 5.3) (D17) |
-| FR5 | Review Dashboard | app/teacher/review/[moduleId] + ReviewEditor |
-| FR6 | Semantic distance -> memory bank | core/memory_bank (ingest, retrieve, cold start seed) + routes/feedback + Firestore find_nearest with the vector index in firestore.indexes.json (D3) |
-| FR7 | Publish to distribution list | PublishModal + assignments collection |
+| FR5 | Review Dashboard | app/teacher/review/[moduleId] + ReviewEditor + CriticMetricsPanel. The module is reassembled on the client from curriculumModules, exercises and exerciseSolutions by lib/firebase/review.fetchModuleForReview, whose written shape is pinned by StoredCurriculumModule and StoredExercise and guarded by tests/test_firestore_repo.py |
+| FR6 | Semantic distance to memory bank | core/memory_bank (ingest, retrieve, cold start seed) + routes/feedback + Firestore find_nearest with the vector index in firestore.indexes.json (D3). The Review Dashboard files one record per edited field through lib/api/feedback.postTeacherEdits, not one per save, because a whole module blob would score below EDIT_SIGNIFICANCE_THRESHOLD and be discarded |
+| FR7 | Publish to distribution list | PublishModal + lib/firebase/review.publishModule. One batched write creates the assignment and denormalizes assignedStudentKeys onto the module and every exercise doc, which is what the security rules read (D11) |
 | FR8 | Telemetry aggregation + dashboards | routes/analytics + core/telemetry + AnalyticsDashboard |
 | FR9 | Browse/select/launch programs | app/student/dashboard + listenToAssignments |
 | FR10 | Workspace + scaffolding | workspace page + ExerciseCard + ScaffoldingSteps |

@@ -7,6 +7,7 @@
  * intact, which is why failures here are typed rather than thrown as bare
  * Errors. A caller cannot decide whether to offer a retry from a string.
  */
+import { backendUrl } from "@/lib/api/backend";
 import type {
   CurriculumPackage,
   GenerationRequest,
@@ -20,27 +21,6 @@ import type {
  * look like a network failure and the retriable signal would be lost.
  */
 export const CLIENT_TIMEOUT_MS = 960_000;
-
-/**
- * Generation does not go through the Next rewrite in next.config.mjs.
- *
- * Measured: that proxy answers 500 at exactly 30.00s, every time, for any
- * upstream slower than 30s. A generation legitimately runs 4 to 11 minutes
- * (evaluation/results/dev_runs/summary.json), so through the proxy the
- * happy path can never arrive, and neither can the NFR7 504, since the
- * proxy's own 500 replaces it well before the server's budget expires.
- *
- * NEXT_PUBLIC_BACKEND_ORIGIN therefore sends these two calls to the
- * backend directly. CORS already allows the frontend origin
- * (settings.frontend_origin). With the variable unset the calls fall back
- * to the proxy path, which keeps a single origin for short requests and is
- * fine for anything under 30s.
- */
-const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_ORIGIN ?? "";
-
-function backendUrl(path: string): string {
-  return BACKEND_ORIGIN ? `${BACKEND_ORIGIN}${path}` : `/backend${path}`;
-}
 
 export type GenerationErrorKind =
   | "timeout"

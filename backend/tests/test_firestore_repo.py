@@ -17,6 +17,8 @@ from app.core.schemas import (
     LessonUnit,
     QualityScores,
     SocraticHint,
+    StoredCurriculumModule,
+    StoredExercise,
     TelemetryEvent,
 )
 
@@ -50,6 +52,7 @@ def sample_package() -> CurriculumPackage:
         subject="math",
         grade_level="5",
         difficulty_level=3,
+        summary="מדריך קצר למורה על שברים במטבח",
         weekly_sequence=["week 1 intro", "week 2 practice"],
         lessons=[
             LessonUnit(
@@ -111,6 +114,45 @@ def test_curriculum_package_round_trip(sample_package):
         assert solution["moduleKey"] == module_key
         assert solution["correctAnswer"].startswith("answer")
         assert solution["socraticHints"][0]["hintText"]
+
+
+def test_stored_docs_match_the_schemas_the_review_screen_reads(sample_package):
+    """The Review Dashboard reassembles a package from these two collections
+    (Step 4.3, FR5), so the written shape is a contract, not an accident.
+
+    Without this, dropping a field in save_curriculum_package would leave a
+    teacher with an empty review screen and no failing test anywhere.
+    """
+    from app.core.firestore import get_db, save_curriculum_package
+
+    module_key = save_curriculum_package(sample_package, teacher_key="t_contract")
+    db = get_db()
+
+    raw_module = db.collection("curriculumModules").document(module_key).get().to_dict()
+    module = StoredCurriculumModule.model_validate(raw_module)
+    assert module.title == "Fractions in the kitchen"
+    assert module.summary == "מדריך קצר למורה על שברים במטבח"
+    assert module.status.value == "draft"
+    assert [lesson.title for lesson in module.lessons] == [
+        "Half of a half",
+        "Comparing fractions",
+    ]
+    assert module.critic_report is not None
+    assert module.quality_scores is not None
+    # Every lesson must be able to find its exercises, or the accordion
+    # renders a lesson with no content and nothing explains why.
+    assert all(lesson.exercise_keys for lesson in module.lessons)
+
+    for lesson in module.lessons:
+        for exercise_key in lesson.exercise_keys:
+            raw = db.collection("exercises").document(exercise_key).get().to_dict()
+            exercise = StoredExercise.model_validate(raw)
+            assert exercise.module_key == module_key
+            assert exercise.prompt
+            # R6 by type: StoredExercise has no answer field to populate,
+            # and the raw doc must not smuggle one in either.
+            assert "correctAnswer" not in raw
+            assert "socraticHints" not in raw
 
 
 def test_telemetry_append_and_memory_round_trip():

@@ -4,7 +4,7 @@
   "runs": {
     "timeout": {
       "mode": "timeout",
-      "timestamp": "2026-11-21T17:11:23.278Z",
+      "timestamp": "2026-11-21T19:11:28.488Z",
       "catalog_subjects": [
         "history",
         "math",
@@ -36,7 +36,7 @@
         "loading-stage-critic",
         "loading-stage-package"
       ],
-      "wall_seconds": 5.46,
+      "wall_seconds": 7.47,
       "error_title": "היצירה חרגה ממסגרת הזמן",
       "retry_offered": true,
       "form_after_timeout": {

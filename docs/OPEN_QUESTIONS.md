@@ -19,3 +19,17 @@ D13 (the NFR2 re-scope) was accepted on 2026-11-19. It still changes a
 requirement set in the approved Phase A book, so the deviation and its
 rationale belong in the Phase B book and the defense slides, stated
 outright. No open question remains.
+
+Q13 (found in Step 4.3, blocks nothing yet but affects FR5) - No step builds
+the teacher dashboard. `/teacher/dashboard` is a Step 4.1 stub and Steps 4.4
+to 4.6 cover the student surface, telemetry and the bot, so the screen a
+teacher lands on after login is never implemented. Two consequences. First,
+a teacher has no way to find a module they created: the Review Dashboard is
+reachable only by moduleKey, which only the Goals screen knows, and only for
+the run that just finished. Second, it makes the orphan module from Step 4.2
+unrecoverable: when a generation succeeds on the server but the client has
+already given up, the draft is persisted and nobody can ever reach it. A
+drafts list on the teacher dashboard fixes both at once and is the obvious
+home for it. Asking rather than building it, because adding a screen the
+guide does not list is a scope change, not a detail.
+
