@@ -20,6 +20,10 @@ requirement set in the approved Phase A book, so the deviation and its
 rationale belong in the Phase B book and the defense slides, stated
 outright. No open question remains.
 
+Q13 is RESOLVED, see docs/DECISIONS.md D20. The user approved adding the
+screen on 2026-11-22 and it is built, with a live listener so an orphaned
+draft surfaces by itself. Original question kept for the record.
+
 Q13 (found in Step 4.3, blocks nothing yet but affects FR5) - No step builds
 the teacher dashboard. `/teacher/dashboard` is a Step 4.1 stub and Steps 4.4
 to 4.6 cover the student surface, telemetry and the bot, so the screen a

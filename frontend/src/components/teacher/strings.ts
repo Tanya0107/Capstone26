@@ -171,4 +171,32 @@ export const strings = {
     "יש שינויים שלא נשמרו. פרסום עכשיו יפרסם את הגרסה השמורה בלבד.",
   publishedNotice: "היחידה פורסמה. פרסום נוסף יחליף את רשימת התלמידים.",
   publishedTo: "פורסמה לתלמידים",
+
+  // ---- Teacher dashboard (FR5, Q13) ----
+  dashTitle: "היחידות שלי",
+  dashIntro:
+    "כל היחידות שיצרתם, החדשות קודם. יחידה בטיוטה ממתינה לבדיקה ולפרסום.",
+  dashCreate: "יצירת יחידה חדשה",
+  dashLoading: "טוען את היחידות...",
+  dashErrorTitle: "לא הצלחנו לטעון את היחידות",
+  dashRetry: "נסו שוב",
+  dashEmptyTitle: "עדיין אין יחידות",
+  dashEmptyBody: "התחילו ביצירת יחידת העשרה ראשונה.",
+  dashEmptyFiltered: "אין יחידות שמתאימות לסינון הזה.",
+  dashFilterAll: "הכול",
+  dashFilterDraft: "טיוטות",
+  dashFilterPublished: "פורסמו",
+  dashCount: "יחידות",
+  dashOpen: "פתיחת היחידה",
+  dashLessons: "שיעורים",
+  dashExercises: "תרגילים",
+  dashCreatedAt: "נוצרה",
+  dashCreatedPending: "נשמרת כרגע",
+  dashAssignedTo: "פורסמה ל",
+  dashStudents: "תלמידים",
+  dashCriticApproved: "הביקורת אישרה",
+  dashCriticNotApproved: "הביקורת לא אישרה",
+  dashCriticUnknown: "אין דוח ביקורת",
+  dashLiveNote:
+    "הרשימה מתעדכנת מעצמה. יחידה שהיצירה שלה הסתיימה בשרת אחרי שהדפדפן הפסיק לחכות תופיע כאן בטיוטה.",
 } as const;
