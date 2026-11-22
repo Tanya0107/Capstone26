@@ -33,12 +33,20 @@ const PROJECT = process.env.FIREBASE_PROJECT ?? "demo-enrichment";
 const FIRESTORE = `http://localhost:8080/v1/projects/${PROJECT}/databases/(default)/documents`;
 const OUT_PATH = resolve("../evaluation/results/dev_runs/review_dashboard_demo.json");
 
-// Must be a real rewrite, not a tweak. The backend only stores an edit
-// whose cosine distance exceeds EDIT_SIGNIFICANCE_THRESHOLD of 0.15, so a
-// one word change would legitimately not be stored and the acceptance
-// check for a memory bank record would fail for the right reason.
-const NEW_HOOK =
-  "נתחיל מסיפור על חלוקת פיצה במשפחה גדולה, ומשם נבנה יחד את הצורך במכנה משותף";
+/**
+ * Two alternative rewrites, so the demo can run twice in a row.
+ *
+ * Each must be a real rewrite rather than a tweak. The backend stores an
+ * edit only when its cosine distance exceeds EDIT_SIGNIFICANCE_THRESHOLD
+ * of 0.15, so a one word change would legitimately not be stored and the
+ * memory bank check would fail for the right reason. Whichever one is not
+ * currently in the doc is the one applied, which keeps the demo
+ * repeatable without ever writing a no op edit.
+ */
+const HOOK_VARIANTS = [
+  "נתחיל מסיפור על חלוקת פיצה במשפחה גדולה, ומשם נבנה יחד את הצורך במכנה משותף",
+  "נפתח במדידת מרכיבים לסלט פירות, ונגלה למה אי אפשר לחבר שלישים עם רבעים בלי להשוות אותם",
+];
 
 async function emu(path) {
   const response = await fetch(`${FIRESTORE}${path}`, {
@@ -61,9 +69,11 @@ function plain(value) {
   if ("nullValue" in value) return null;
   if ("arrayValue" in value) return (value.arrayValue.values ?? []).map(plain);
   if ("mapValue" in value) {
-    return Object.fromEntries(
-      Object.entries(value.mapValue.fields ?? {}).map(([k, v]) => [k, plain(v)]),
-    );
+    const fields = value.mapValue.fields ?? {};
+    // A native Firestore vector is a tagged map, not an arrayValue, so
+    // reading it as an array would report an embedding as missing.
+    if (fields.__type__?.stringValue === "__vector__") return plain(fields.value);
+    return Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, plain(v)]));
   }
   return null;
 }
@@ -87,6 +97,19 @@ async function listCollection(name) {
     pageToken = body.nextPageToken ?? "";
   } while (pageToken);
   return out;
+}
+
+/**
+ * Click through the element's own handler rather than through CDP.
+ *
+ * Measured on this page: page.click on the publish button delivered
+ * nothing, no state change and no Firestore query, while the element's own
+ * click() opened the dialog and loaded all 12 students. The button was
+ * enabled, in the viewport and topmost at its own centre, so this is the
+ * same rig limitation as the key events in D19, extended to clicks.
+ */
+async function tap(page, testid) {
+  await page.$eval(`[data-testid="${testid}"]`, (el) => el.click());
 }
 
 /** Set a field the way a person would, without dispatching key events. */
@@ -158,8 +181,8 @@ try {
   // FR5: the module actually reassembled from its three collections.
   const rendered = await page.evaluate(() => ({
     title: document.querySelector('[data-testid="review-module-title"]')?.textContent ?? "",
-    lessons: document.querySelectorAll('[data-testid^="review-lesson-"]').length,
-    exercises: document.querySelectorAll('[data-testid^="review-exercise-"]').length,
+    lessons: document.querySelectorAll('details[data-testid^="review-lesson-"]').length,
+    exercises: document.querySelectorAll('li[data-testid^="review-exercise-"]').length,
     answersShown: [...document.querySelectorAll('[data-testid^="review-exercise-answer-"]')].filter(
       (el) => el.value.trim().length > 0,
     ).length,
@@ -181,6 +204,8 @@ try {
 
   // FR5 edit through the real controlled editor.
   const originalHook = before.lessons[0].hook;
+  const NEW_HOOK =
+    originalHook.trim() === HOOK_VARIANTS[0] ? HOOK_VARIANTS[1] : HOOK_VARIANTS[0];
   record.originalHook = originalHook;
   record.newHook = NEW_HOOK;
   await setField(page, "review-lesson-hook-0", NEW_HOOK);
@@ -189,7 +214,7 @@ try {
   );
   check("save_enabled_after_edit", saveEnabled === true);
 
-  await page.click('[data-testid="review-save"]');
+  await tap(page, "review-save");
   await page.waitForSelector('[data-testid="review-save-notice"]', { timeout: 120000 });
   record.saveNotice = await page.$eval(
     '[data-testid="review-save-notice"]',
@@ -235,21 +260,38 @@ try {
   );
 
   // FR7 publish through the modal.
-  await page.click('[data-testid="review-publish-open"]');
+  await tap(page, "review-publish-open");
   await page.waitForSelector('[data-testid="publish-modal"][open]', { timeout: 30000 });
   await page.waitForFunction(
     () => document.querySelectorAll('[data-testid^="publish-student-"]').length > 0,
     { timeout: 30000 },
   );
+  // Clear first. Republishing a published module opens the modal with its
+  // current audience already ticked, so clicking those boxes would untick
+  // them and the demo would ask to publish to nobody. Clearing makes the
+  // selection the same whatever state the module was left in.
+  await tap(page, "publish-clear-all");
   const chosen = await page.evaluate(() => {
     const boxes = [...document.querySelectorAll('[data-testid^="publish-student-"]')].slice(0, 2);
     boxes.forEach((box) => box.click());
-    return boxes.map((box) => box.dataset.testid.replace("publish-student-", ""));
+    const checked = [...document.querySelectorAll('[data-testid^="publish-student-"]')]
+      .filter((box) => box.checked)
+      .map((box) => box.dataset.testid.replace("publish-student-", ""));
+    return {
+      clicked: boxes.map((box) => box.dataset.testid.replace("publish-student-", "")),
+      checked,
+      total: document.querySelectorAll('[data-testid^="publish-student-"]').length,
+    };
   });
-  record.chosenStudents = chosen;
-  check("publish_modal_lists_students", chosen.length === 2, chosen);
+  record.studentSelection = chosen;
+  // What is ticked is what gets published, so that is what to assert on.
+  check(
+    "publish_modal_lists_students",
+    chosen.total === 12 && chosen.checked.length === 2,
+    chosen,
+  );
 
-  await page.click('[data-testid="publish-confirm"]');
+  await tap(page, "publish-confirm");
   await page.waitForSelector('[data-testid="review-publish-notice"]', { timeout: 60000 });
   record.publishNotice = await page.$eval(
     '[data-testid="review-publish-notice"]',
@@ -258,23 +300,31 @@ try {
 
   // Acceptance: an assignment doc with assignedTo.
   const assignments = await listCollection("assignments");
-  const mine = assignments.filter((a) => a.data.moduleKey === moduleKey);
-  record.assignment = mine.length
+  // The REST list endpoint orders by document id, not by creation time, so
+  // once a module has been published more than once the newest assignment
+  // has to be chosen by its own timestamp rather than by list position.
+  const mine = assignments
+    .filter((a) => a.data.moduleKey === moduleKey)
+    .sort((a, b) => String(a.data.publishedAt).localeCompare(String(b.data.publishedAt)));
+  const newest = mine[mine.length - 1];
+  record.assignmentCount = mine.length;
+  record.assignment = newest
     ? {
-        assignmentId: mine[mine.length - 1].id,
-        assignedTo: mine[mine.length - 1].data.assignedTo,
-        teacherKey: mine[mine.length - 1].data.teacherKey,
-        status: mine[mine.length - 1].data.status,
-        publishedAt: mine[mine.length - 1].data.publishedAt,
+        assignmentId: newest.id,
+        assignedTo: newest.data.assignedTo,
+        teacherKey: newest.data.teacherKey,
+        status: newest.data.status,
+        publishedAt: newest.data.publishedAt,
       }
     : null;
-  const assignment = mine[mine.length - 1]?.data;
+  const assignment = newest?.data;
   check(
     "assignment_created_with_assigned_to",
     Boolean(
       assignment &&
         Array.isArray(assignment.assignedTo) &&
-        chosen.every((key) => assignment.assignedTo.includes(key)) &&
+        chosen.checked.every((key) => assignment.assignedTo.includes(key)) &&
+        assignment.assignedTo.length === chosen.checked.length &&
         assignment.teacherKey === "t1" &&
         assignment.status === "active",
     ),
@@ -287,7 +337,7 @@ try {
   check("module_marked_published", published.status === "published", published.status);
   check(
     "module_audience_denormalized",
-    chosen.every((key) => (published.assignedStudentKeys ?? []).includes(key)),
+    chosen.checked.every((key) => (published.assignedStudentKeys ?? []).includes(key)),
     published.assignedStudentKeys,
   );
 
@@ -301,7 +351,7 @@ try {
   record.exerciseAudit = {
     count: exercises.length,
     allHaveAudience: exercises.every((e) =>
-      chosen.every((k) => (e.data.assignedStudentKeys ?? []).includes(k)),
+      chosen.checked.every((k) => (e.data.assignedStudentKeys ?? []).includes(k)),
     ),
     leaking: exercises
       .filter((e) => "correctAnswer" in e.data || "socraticHints" in e.data)

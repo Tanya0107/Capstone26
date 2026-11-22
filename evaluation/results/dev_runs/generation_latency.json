@@ -43,26 +43,208 @@
             }
           ],
           "note": "Backfilled from the persisted module doc: the harness gained critic_issues after this run. The issue detail asserts equivalence while the issue type says wrong_answer, see docs/prompt_log.md."
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:40:06.546941+00:00",
+          "wall_seconds": 212.21,
+          "http_status": 200,
+          "status": "ok",
+          "response_validates": true,
+          "module_key": "Aniezs7n5eKoNPLxeZ0l",
+          "server_latency_seconds": 210.567,
+          "critic_approved": true,
+          "regeneration_cycles_used": 0,
+          "critic_issue_count": 0,
+          "critic_issues": [],
+          "lesson_count": 3,
+          "exercise_count": 7,
+          "rouge_l": 0.2382,
+          "reference_unit": "unit_01_math_fractions_g5",
+          "reference_validated": false,
+          "persistence": {
+            "module_exists": true,
+            "creator_is_caller": true,
+            "quality_scores_persisted": true,
+            "exercise_count_matches": true,
+            "exercises_expected": 7,
+            "exercises_found": 7,
+            "student_readable_docs_without_answers": true,
+            "leaking_exercise_ids": [],
+            "solutions_found": 7,
+            "every_exercise_has_a_solution": true,
+            "ok": true
+          }
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:43:38.853062+00:00",
+          "wall_seconds": 422.87,
+          "http_status": 200,
+          "status": "ok",
+          "response_validates": true,
+          "module_key": "q4K8xPoV4udCe3qgz1j7",
+          "server_latency_seconds": 422.378,
+          "critic_approved": false,
+          "regeneration_cycles_used": 2,
+          "critic_issue_count": 1,
+          "critic_issues": [
+            {
+              "exerciseOrder": 3,
+              "issueType": "wrong_answer",
+              "detail": "התשובה הנתונה: 25/6, התשובה שלך: 4 1/12. השבר הבלתי אמיתי 49/12 הוא שווה ערך ל-4 1/12, אך 25/6 אינו מתקבל במהלך לאותה תוצאה. לאחר הפיכת מספרים מעורבים לשברים בלתי אמיתיים, בדוק התהליך למציאת המכנים המשותפים וכימות כולל ניתוח בשחף הנראה."
+            }
+          ],
+          "lesson_count": 3,
+          "exercise_count": 6,
+          "rouge_l": 0.2176,
+          "reference_unit": "unit_01_math_fractions_g5",
+          "reference_validated": false,
+          "persistence": {
+            "module_exists": true,
+            "creator_is_caller": true,
+            "quality_scores_persisted": true,
+            "exercise_count_matches": true,
+            "exercises_expected": 6,
+            "exercises_found": 6,
+            "student_readable_docs_without_answers": true,
+            "leaking_exercise_ids": [],
+            "solutions_found": 6,
+            "every_exercise_has_a_solution": true,
+            "ok": true
+          }
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:50:41.737959+00:00",
+          "wall_seconds": 190.91,
+          "http_status": 200,
+          "status": "ok",
+          "response_validates": true,
+          "module_key": "3KO446LZMzsyEObgqwkq",
+          "server_latency_seconds": 189.344,
+          "critic_approved": true,
+          "regeneration_cycles_used": 0,
+          "critic_issue_count": 0,
+          "critic_issues": [],
+          "lesson_count": 3,
+          "exercise_count": 6,
+          "rouge_l": 0.2161,
+          "reference_unit": "unit_01_math_fractions_g5",
+          "reference_validated": false,
+          "persistence": {
+            "module_exists": true,
+            "creator_is_caller": true,
+            "quality_scores_persisted": true,
+            "exercise_count_matches": true,
+            "exercises_expected": 6,
+            "exercises_found": 6,
+            "student_readable_docs_without_answers": true,
+            "leaking_exercise_ids": [],
+            "solutions_found": 6,
+            "every_exercise_has_a_solution": true,
+            "ok": true
+          }
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:53:52.663657+00:00",
+          "wall_seconds": 175.2,
+          "http_status": 200,
+          "status": "ok",
+          "response_validates": true,
+          "module_key": "b8ZR1DiCyCb7HQcA2UDP",
+          "server_latency_seconds": 174.534,
+          "critic_approved": true,
+          "regeneration_cycles_used": 0,
+          "critic_issue_count": 0,
+          "critic_issues": [],
+          "lesson_count": 3,
+          "exercise_count": 6,
+          "rouge_l": 0.2483,
+          "reference_unit": "unit_01_math_fractions_g5",
+          "reference_validated": false,
+          "persistence": {
+            "module_exists": true,
+            "creator_is_caller": true,
+            "quality_scores_persisted": true,
+            "exercise_count_matches": true,
+            "exercises_expected": 6,
+            "exercises_found": 6,
+            "student_readable_docs_without_answers": true,
+            "leaking_exercise_ids": [],
+            "solutions_found": 6,
+            "every_exercise_has_a_solution": true,
+            "ok": true
+          }
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:56:47.875992+00:00",
+          "wall_seconds": 18.48,
+          "http_status": 500,
+          "status": "error",
+          "error": "Internal Server Error",
+          "note": "Anthropic credit balance exhausted, see the campaign note on this brief."
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:57:06.351316+00:00",
+          "wall_seconds": 3.02,
+          "http_status": 500,
+          "status": "error",
+          "error": "Internal Server Error",
+          "note": "Anthropic credit balance exhausted, see the campaign note on this brief."
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:57:09.372095+00:00",
+          "wall_seconds": 2.87,
+          "http_status": 500,
+          "status": "error",
+          "error": "Internal Server Error",
+          "note": "Anthropic credit balance exhausted, see the campaign note on this brief."
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:57:12.242978+00:00",
+          "wall_seconds": 3.37,
+          "http_status": 500,
+          "status": "error",
+          "error": "Internal Server Error",
+          "note": "Anthropic credit balance exhausted, see the campaign note on this brief."
+        },
+        {
+          "brief": "math_fractions_g5",
+          "timestamp": "2026-11-21T19:57:15.616776+00:00",
+          "wall_seconds": 2.87,
+          "http_status": 500,
+          "status": "error",
+          "error": "Internal Server Error",
+          "note": "Anthropic credit balance exhausted, see the campaign note on this brief."
         }
       ],
       "summary": {
-        "runs_recorded": 1,
-        "runs_ok": 1,
+        "runs_recorded": 10,
+        "runs_ok": 5,
         "runs_timed_out": 0,
-        "runs_failed": 0,
+        "runs_failed": 5,
         "budget_seconds": 900,
-        "min_seconds": 462.07,
-        "p50_seconds": 462.07,
+        "min_seconds": 175.2,
+        "p50_seconds": 212.21,
         "p95_seconds": 462.07,
         "max_seconds": 462.07,
-        "within_budget": 1,
+        "within_budget": 5,
         "percentile_method": "nearest rank over successful runs. With 10 samples the p95 is the maximum observed value, so it bounds this sample rather than estimating a population p95. Treat it as a DEV observation (R1).",
-        "acceptance_gate": "BUILD_GUIDE Step 3.6 asks for p50/p95 over 10 runs. 1 successful run(s) recorded, so the gate is NOT MET.",
+        "acceptance_gate": "BUILD_GUIDE Step 3.6 asks for p50/p95 over 10 runs. 5 successful run(s) recorded, so the gate is NOT MET.",
         "gate_met": false,
         "all_responses_validated": true,
         "all_persistence_checks_passed": true
-      }
+      },
+      "campaign_notes": [
+        "Campaign of 2026-11-21 stopped early. Runs 1 to 4 of that session succeeded. Runs 5 to 9 returned HTTP 500 after 18.5s and then about 3s each, because the Anthropic API credit balance was exhausted mid campaign: 'Your credit balance is too low to access the Anthropic API' as a 400 invalid_request_error, retried 3 times by app.core.llm and surfaced as LLMCallError, which the route maps to 500. These are environment failures and not pipeline failures, so they are recorded as errors and excluded from the percentiles rather than counted as overruns. OpenAI backed calls, the critic and the embeddings, were unaffected. Five more successful runs are needed to close the Step 3.6 gate once the balance is topped up."
+      ]
     }
   },
-  "updated_at": "2026-11-18T22:19:53.197305+00:00"
+  "updated_at": "2026-11-21T19:57:18.483476+00:00"
 }

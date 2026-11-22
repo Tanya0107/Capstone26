@@ -1,0 +1,160 @@
+{
+  "label": "DEV demo evidence, not an evaluation result (R1)",
+  "checks": {
+    "module_reassembled": {
+      "ok": true,
+      "detail": {
+        "title": "שברים בחיים: מהמטבח אל המספרים",
+        "lessons": 3,
+        "exercises": 6,
+        "answersShown": 6,
+        "criticVerdict": "הביקורת אישרה את היחידה",
+        "scoresDisclaimer": true,
+        "referenceShown": "נמדד מול יחידת הייחוס unit_01_math_fractions_g5. יחידת הייחוס עצמה עדיין בטיוטה ולא אומתה, ולכן המספר הוא אינדיקציה בלבד"
+      }
+    },
+    "teacher_sees_answers": {
+      "ok": true,
+      "detail": 6
+    },
+    "r1_scores_copy_present": {
+      "ok": true
+    },
+    "r1_reference_shown": {
+      "ok": true,
+      "detail": "נמדד מול יחידת הייחוס unit_01_math_fractions_g5. יחידת הייחוס עצמה עדיין בטיוטה ולא אומתה, ולכן המספר הוא אינדיקציה בלבד"
+    },
+    "save_enabled_after_edit": {
+      "ok": true
+    },
+    "edit_persisted": {
+      "ok": true,
+      "detail": "נפתח במדידת מרכיבים לסלט פירות, ונגלה למה אי אפשר לחבר שלישים עם רבעים בלי להשוות אותם"
+    },
+    "memory_bank_record_written": {
+      "ok": true,
+      "detail": {
+        "before": 7,
+        "after": 8,
+        "addedForThisModule": 1,
+        "sample": {
+          "teacherKey": "t1",
+          "semanticDistance": 0.540552246012266,
+          "teacherModifications": "במקום: נתחיל מסיפור על חלוקת פיצה במשפחה גדולה, ומשם נבנה יחד את הצורך במכנה משותף\nהמורה העדיף: נפתח במדידת מרכיבים לסלט פירות, ונגלה למה אי אפשר לחבר שלישים עם רבעים בלי להשוות אותם",
+          "vectorLength": 1536
+        }
+      }
+    },
+    "memory_record_holds_the_pair": {
+      "ok": true
+    },
+    "memory_record_has_embedding": {
+      "ok": true
+    },
+    "publish_modal_lists_students": {
+      "ok": true,
+      "detail": {
+        "clicked": [
+          "s08",
+          "s02"
+        ],
+        "checked": [
+          "s08",
+          "s02"
+        ],
+        "total": 12
+      }
+    },
+    "assignment_created_with_assigned_to": {
+      "ok": true,
+      "detail": {
+        "assignmentId": "XRVqp4iajW98uBGXhmJG",
+        "assignedTo": [
+          "s08",
+          "s02"
+        ],
+        "teacherKey": "t1",
+        "status": "active",
+        "publishedAt": "2026-11-22T07:43:30.315Z"
+      }
+    },
+    "module_marked_published": {
+      "ok": true,
+      "detail": "published"
+    },
+    "module_audience_denormalized": {
+      "ok": true,
+      "detail": [
+        "s08",
+        "s02"
+      ]
+    },
+    "exercise_audience_denormalized": {
+      "ok": true,
+      "detail": {
+        "count": 6,
+        "allHaveAudience": true,
+        "leaking": []
+      }
+    },
+    "r6_no_answers_in_student_docs": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "moduleKey": "8RVqoallf52n5MkHmltE",
+  "timestamp": "2026-11-22T07:43:26.635Z",
+  "rendered": {
+    "title": "שברים בחיים: מהמטבח אל המספרים",
+    "lessons": 3,
+    "exercises": 6,
+    "answersShown": 6,
+    "criticVerdict": "הביקורת אישרה את היחידה",
+    "scoresDisclaimer": true,
+    "referenceShown": "נמדד מול יחידת הייחוס unit_01_math_fractions_g5. יחידת הייחוס עצמה עדיין בטיוטה ולא אומתה, ולכן המספר הוא אינדיקציה בלבד"
+  },
+  "originalHook": "נתחיל מסיפור על חלוקת פיצה במשפחה גדולה, ומשם נבנה יחד את הצורך במכנה משותף",
+  "newHook": "נפתח במדידת מרכיבים לסלט פירות, ונגלה למה אי אפשר לחבר שלישים עם רבעים בלי להשוות אותם",
+  "saveNotice": "השינויים נשמרו. שינוי אחד נלמד לטובת יחידות הבאות",
+  "memoryBank": {
+    "before": 7,
+    "after": 8,
+    "addedForThisModule": 1,
+    "sample": {
+      "teacherKey": "t1",
+      "semanticDistance": 0.540552246012266,
+      "teacherModifications": "במקום: נתחיל מסיפור על חלוקת פיצה במשפחה גדולה, ומשם נבנה יחד את הצורך במכנה משותף\nהמורה העדיף: נפתח במדידת מרכיבים לסלט פירות, ונגלה למה אי אפשר לחבר שלישים עם רבעים בלי להשוות אותם",
+      "vectorLength": 1536
+    }
+  },
+  "studentSelection": {
+    "clicked": [
+      "s08",
+      "s02"
+    ],
+    "checked": [
+      "s08",
+      "s02"
+    ],
+    "total": 12
+  },
+  "publishNotice": "היחידה פורסמה. פורסמה לתלמידים: 2",
+  "assignmentCount": 2,
+  "assignment": {
+    "assignmentId": "XRVqp4iajW98uBGXhmJG",
+    "assignedTo": [
+      "s08",
+      "s02"
+    ],
+    "teacherKey": "t1",
+    "status": "active",
+    "publishedAt": "2026-11-22T07:43:30.315Z"
+  },
+  "exerciseAudit": {
+    "count": 6,
+    "allHaveAudience": true,
+    "leaking": []
+  },
+  "ok": true,
+  "failures": []
+}
