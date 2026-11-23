@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Helpers (NFR4: Role-Based Access Control) ----
+    // ---- Helpers (NFR4 Role Based Access Control) ----
     function isSignedIn() { return request.auth != null; }
     function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
     function isTeacher() { return isSignedIn() && userDoc().data.role == "teacher"; }
@@ -17,29 +17,49 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isTeacher());
-      allow write: if false; // provisioned by admin script / Cloud Function only
+      allow write: if false; // provisioned by admin script or Cloud Function only
     }
 
     match /curriculumModules/{moduleId} {
-      // Teachers manage their own modules (FR5); students read published assigned ones
-      allow read: if isTeacher() || isStudent(); // TODO: tighten student read to assigned modules only
-      allow create, update, delete: if isTeacher()
+      // Teachers manage their own modules (FR5). Students read only modules
+      // published to them. assignedStudentKeys is denormalized at publish
+      // time because list queries must be provable from query filters alone,
+      // a get() based rule would reject them. See docs/API_CONTRACT.md.
+      allow read: if isTeacher()
+        || (isStudent() && request.auth.uid in resource.data.assignedStudentKeys);
+      allow create: if isTeacher()
         && request.resource.data.creatorTeacherKey == request.auth.uid;
+      allow update: if isTeacher()
+        && resource.data.creatorTeacherKey == request.auth.uid
+        && request.resource.data.creatorTeacherKey == request.auth.uid;
+      allow delete: if isTeacher()
+        && resource.data.creatorTeacherKey == request.auth.uid;
     }
 
     match /exercises/{exerciseId} {
-      allow read: if isSignedIn();
+      // Student safe fields only (prompt, order, scaffoldSteps). The answer
+      // fields live in exerciseSolutions (R6). Audience array mirrors the
+      // parent module and is written in the same publish batch.
+      allow read: if isTeacher()
+        || (isStudent() && request.auth.uid in resource.data.assignedStudentKeys);
       allow create, update, delete: if isTeacher();
-      // NOTE (FR11): correctAnswer + socraticHints must NOT reach the student
-      // client. TODO Phase 2: split into a teacher-only doc or serve hints
-      // exclusively through the backend tutor endpoint.
+    }
+
+    match /exerciseSolutions/{solutionId} {
+      // R6 answer protection. Never readable by students. The Socratic tutor
+      // reads these server side through the Admin SDK.
+      allow read: if isTeacher();
+      allow create, update, delete: if isTeacher();
     }
 
     // ---- Distribution & Progress Bank ----
     match /assignments/{assignmentId} {
       allow read: if isTeacher()
         || (isStudent() && request.auth.uid in resource.data.assignedTo);
-      allow create, update: if isTeacher();
+      allow create: if isTeacher()
+        && request.resource.data.teacherKey == request.auth.uid;
+      allow update: if isTeacher()
+        && resource.data.teacherKey == request.auth.uid;
       allow delete: if false;
     }
 
@@ -49,11 +69,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ---- Logs & Analytics Bank (NFR5: no PII in telemetry payloads) ----
+    // ---- Logs & Analytics Bank (NFR5 no PII in telemetry payloads) ----
     match /telemetryEvents/{eventId} {
       allow read: if isTeacher();
       allow create: if isStudent() && request.resource.data.studentKey == request.auth.uid;
-      allow update, delete: if false; // append-only log
+      allow update, delete: if false; // append only log
     }
 
     match /feedbackMemoryBank/{memoryId} {

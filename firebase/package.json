@@ -1,0 +1,17 @@
+{
+  "name": "enrichment-firebase-rules-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:emulator": "firebase emulators:exec --only firestore --project demo-enrichment \"npm test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.12.0",
+    "firebase-tools": "^14.5.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
+  }
+}

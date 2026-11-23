@@ -1,7 +1,11 @@
 /**
  * TypeScript mirror of backend/app/core/schemas.py and the Firestore schema
- * (project book, Fig 4). If you change one side, change the other — this pair
+ * (project book, Fig 4). If you change one side, change the other. This pair
  * IS the API contract (Phase 2).
+ *
+ * Answer protection (R6): stored exercise docs are student safe. The
+ * protected answer fields live in exerciseSolutions, readable by teachers
+ * only and served to the tutor server side. See docs/API_CONTRACT.md.
  */
 
 export type Role = "teacher" | "student";
@@ -32,7 +36,9 @@ export interface CurriculumModule {
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   creatorTeacherKey: string;
   createdAt: string;
-  status?: "draft" | "published";
+  status: "draft" | "published";
+  // Denormalized at publish time so rules can gate student reads and queries
+  assignedStudentKeys: string[];
 }
 
 export interface SocraticHint {
@@ -45,11 +51,22 @@ export interface Exercise {
   moduleKey: string;
   order: number;
   prompt: string;
-  // SECURITY (FR11): correctAnswer + socraticHints must never be fetched by
-  // the student client — teacher views only; the tutor gets them server-side.
+  scaffoldSteps?: string[]; // FR10
+  // Denormalized at publish time, mirrors the parent module audience
+  assignedStudentKeys: string[];
+  // SECURITY (FR11, R6): answer fields are present only in the pipeline
+  // output reviewed by teachers. Stored exercise docs never contain them,
+  // they live in exerciseSolutions and never reach the student client.
   correctAnswer?: string;
   socraticHints?: SocraticHint[];
-  scaffoldSteps?: string[]; // FR10
+}
+
+export interface ExerciseSolution {
+  solutionId: string; // same id as the paired exercise doc
+  exerciseKey: string;
+  moduleKey: string;
+  correctAnswer: string;
+  socraticHints: SocraticHint[];
 }
 
 // ---------- Distribution & Progress Bank ----------
@@ -70,6 +87,45 @@ export interface StudentProgress {
   isCompleted: boolean;
   startedAt: string;
   completedAt?: string;
+}
+
+// ---------- Analytics (FR8, FR13) ----------
+export interface StudentAnalyticsRow {
+  studentKey: string;
+  attSeconds?: number;
+  tcvSeconds?: number;
+  hsr?: number;
+  ngs?: number;
+  completed: boolean;
+}
+
+export interface AssignmentAnalytics {
+  assignmentKey: string;
+  students: StudentAnalyticsRow[];
+}
+
+// ---------- Feedback Memory Bank (FR6) ----------
+export interface FeedbackIngestResponse {
+  semanticDistance: number;
+  stored: boolean;
+}
+
+export interface TeacherEditRecord {
+  teacherKey: string;
+  moduleKey: string;
+  originalText: string;
+  editedText: string;
+}
+
+// Backend only collection (Admin SDK). Mirrored here for contract parity.
+export interface FeedbackMemoryRecord {
+  memoryId: string;
+  teacherKey: string;
+  moduleKey: string;
+  teacherModifications: string;
+  semanticDistance: number;
+  adaptedContextVector: number[];
+  createdAt: string;
 }
 
 // ---------- Logs & Analytics Bank ----------
@@ -147,12 +203,25 @@ export interface CurriculumPackage {
   generationLatencySeconds?: number;
 }
 
+export interface ChatMessage {
+  role: "student" | "tutor";
+  text: string;
+}
+
+export interface TelemetrySnapshot {
+  attSeconds: number;
+  tcvSeconds?: number;
+  hsr?: number;
+  idleSeconds: number;
+}
+
 export interface TutorTurnRequest {
   studentKey: string;
   assignmentKey: string;
   exerciseKey: string;
   studentMessage: string;
-  conversationHistory: { role: "student" | "tutor"; text: string }[];
+  conversationHistory: ChatMessage[];
+  telemetrySnapshot?: TelemetrySnapshot;
 }
 
 export interface TutorTurnResponse {

@@ -4,10 +4,12 @@ Model choices follow docs/DECISIONS.md D1 and D2. The critic runs on a
 different vendor family than the generator for independent verification.
 """
 from functools import lru_cache
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
     # LLM providers
     anthropic_api_key: str = ""
     openai_api_key: str = ""
@@ -21,16 +23,13 @@ class Settings(BaseSettings):
     firebase_project_id: str = ""
     use_firestore_emulator: bool = True
     firestore_emulator_host: str = "localhost:8080"
+    firebase_auth_emulator_host: str = "localhost:9099"
 
     # NFR2 budget: generation plus scoring plus self correction within 15s
     generation_timeout_seconds: int = 15
     max_critic_regeneration_cycles: int = 2
 
     frontend_origin: str = "http://localhost:3000"
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
 
 
 @lru_cache
