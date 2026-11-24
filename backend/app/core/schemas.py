@@ -63,6 +63,33 @@ class GenerationRequest(ApiModel):
     standards_hint: Optional[str] = None
 
 
+class SubjectOption(ApiModel):
+    """One subject the pipeline can actually serve (D8, FR1).
+
+    Servable means two corpora know it: the curated standards snapshot the
+    Intake Agent cites from, and the critic strategy map that picks between
+    an independent solve and claim verification. The Goals screen offers
+    only these, so the form cannot submit a request the route would reject.
+    """
+    subject: str
+    subject_type: str = Field(..., description="quantitative or open_ended, per SUBJECT_TYPES")
+    grades: list[str] = Field(
+        ...,
+        description="Grades this snapshot covers. A grade outside the list "
+        "would give the Intake Agent an empty standards slice",
+    )
+    draft_corpus: bool = Field(
+        False,
+        description="The standards snapshot is still pending team validation, "
+        "so a unit built on it is a draft and not evidence (R1)",
+    )
+
+
+class SubjectCatalog(ApiModel):
+    """Response of GET /api/generation/subjects, drives the FR1 form."""
+    subjects: list[SubjectOption] = Field(default_factory=list)
+
+
 # ------------------------------------------------- curriculum content (Fig 4)
 class SocraticHint(ApiModel):
     hint_order: int = Field(..., ge=1)
@@ -279,6 +306,58 @@ class CurriculumModule(ApiModel):
     status: ModuleStatus = ModuleStatus.draft
     assigned_student_keys: list[str] = Field(default_factory=list)
     created_at: Optional[datetime] = None
+
+
+class LessonMeta(ApiModel):
+    """One lesson as it is stored on the module doc.
+
+    The lesson keeps its own prose but not its exercises, which are
+    decoupled docs. exercise_keys is the join, in presentation order.
+    """
+    title: str
+    objectives: list[str] = Field(default_factory=list)
+    hook: str = ""
+    exercise_keys: list[str] = Field(default_factory=list)
+
+
+class StoredCurriculumModule(ApiModel):
+    """The curriculumModules doc as save_curriculum_package actually writes it.
+
+    CurriculumModule above is the narrow mirror of the shared fields. This
+    is the whole document, including the parts the Review Dashboard needs
+    to reassemble a package from the collections a teacher can read
+    (Step 4.3, FR5). It exists so that a change to the write side fails a
+    test here rather than silently emptying a teacher's review screen.
+    """
+    title: str
+    summary: Optional[str] = None
+    subject: str
+    grade_level: str
+    difficulty_level: int = Field(..., ge=1, le=5)
+    creator_teacher_key: str
+    status: ModuleStatus = ModuleStatus.draft
+    assigned_student_keys: list[str] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    weekly_sequence: list[str] = Field(default_factory=list)
+    lessons: list[LessonMeta] = Field(default_factory=list)
+    assessment: Optional[AssessmentBundle] = None
+    critic_report: Optional[CriticReport] = None
+    quality_scores: Optional[QualityScores] = None
+    generation_latency_seconds: Optional[float] = None
+
+
+class StoredExercise(ApiModel):
+    """The exercises doc, student safe by construction (R6, D11).
+
+    No answer field appears here, by type. The paired ExerciseSolution
+    holds those and is teacher only.
+    """
+    exercise_id: Optional[str] = None
+    module_key: str
+    order: int
+    prompt: str
+    scaffold_steps: list[str] = Field(default_factory=list)
+    assigned_student_keys: list[str] = Field(default_factory=list)
 
 
 class Assignment(ApiModel):

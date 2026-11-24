@@ -22,3 +22,4 @@ firestore-debug.log
 .vscode/
 # Evaluation results are committed as evidence (R1), do not ignore them
 *.tsbuildinfo
+firebase-debug*.log

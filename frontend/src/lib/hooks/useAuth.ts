@@ -1,7 +1,12 @@
 /**
- * Auth state hook (NFR4). Exposes { user, role, idToken, loading }.
- * Role comes from custom claims set at provisioning, with a users doc
- * fallback. onIdTokenChanged keeps the token fresh across refreshes.
+ * Auth state hook (NFR4). Exposes { user, role, schoolKey, idToken, loading }.
+ * Role and schoolKey come from custom claims set at provisioning, with a
+ * users doc fallback. onIdTokenChanged keeps the token fresh across
+ * refreshes.
+ *
+ * schoolKey is here because GenerationRequest requires it (FR1) and the
+ * claim is its only authoritative source. Letting a screen invent one
+ * would attach a module to the wrong school.
  */
 "use client";
 
@@ -14,11 +19,18 @@ import type { Role } from "@/types/models";
 export interface AuthState {
   user: User | null;
   role: Role | null;
+  schoolKey: string | null;
   idToken: string | null;
   loading: boolean;
 }
 
-const signedOut: AuthState = { user: null, role: null, idToken: null, loading: false };
+const signedOut: AuthState = {
+  user: null,
+  role: null,
+  schoolKey: null,
+  idToken: null,
+  loading: false,
+};
 
 export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({ ...signedOut, loading: true });
@@ -32,14 +44,18 @@ export function useAuth(): AuthState {
       try {
         const tokenResult = await user.getIdTokenResult();
         let role = (tokenResult.claims.role as Role | undefined) ?? null;
-        if (!role) {
+        let schoolKey = (tokenResult.claims.schoolKey as string | undefined) ?? null;
+        if (!role || !schoolKey) {
+          // One read covers both fallbacks rather than one read each.
           const snapshot = await getDoc(doc(db, "users", user.uid));
-          role = (snapshot.data()?.role as Role | undefined) ?? null;
+          const profile = snapshot.data();
+          role = role ?? ((profile?.role as Role | undefined) ?? null);
+          schoolKey = schoolKey ?? ((profile?.schoolKey as string | undefined) ?? null);
         }
-        setState({ user, role, idToken: tokenResult.token, loading: false });
+        setState({ user, role, schoolKey, idToken: tokenResult.token, loading: false });
       } catch (err) {
         console.error("Failed to resolve auth role", err);
-        setState({ user, role: null, idToken: null, loading: false });
+        setState({ user, role: null, schoolKey: null, idToken: null, loading: false });
       }
     });
   }, []);

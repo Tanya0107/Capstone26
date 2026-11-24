@@ -357,3 +357,431 @@ quantification D14 already points to.
 Nothing was lost to the teacher in the meantime: the package was returned
 with `approved: false` and the issue surfaced, which is the designed FR3
 behaviour at the regeneration cap, not a dropped draft.
+
+## Step 4.1 evidence, design tokens and app shell (2026-11-19)
+
+Phase 4 opens with a design pass, so the choices are recorded here and in
+D18 rather than left implicit in class names.
+
+Direction: warm academic. One token set lives in CSS variables in
+`frontend/src/styles/globals.css`, and `tailwind.config.ts` maps every
+color utility onto those variables through `rgb(var(--token) /
+<alpha-value>)`. The teacher theme is the default deep teal. `AppShell`
+sets `data-role="student"`, which re-points the same variables at warm
+amber and sand. The consequence worth stating: no screen names a color,
+so a screen written for one audience renders correctly for the other.
+Density, not hue, carries the rest of the split, `max-w-shell` with a
+tight rhythm for teachers against `max-w-reading` with an open one for
+students.
+
+Typefaces are Heebo for display and Assistant for body, both drawn as
+Hebrew families rather than Latin ones extended to Hebrew (D5). They load
+through `next/font`, which self hosts them at build time, so there is no
+third party request and no swap driven layout shift. Both are confirmed
+present in the installed `next` font data with the `hebrew` subset and the
+weights requested.
+
+### The staged loader shows estimates, and says so
+
+`LoadingIndicator` lists the six orchestrator stages and advances through
+them while a generation is in flight. The honest limit:
+`POST /api/generation` is a single request that returns the finished
+package, so the browser has no progress channel and cannot know the real
+server stage.
+
+The per stage durations are therefore estimates, but they are measured
+estimates, taken from the single pass stage timings already recorded in
+`evaluation/results/dev_runs/summary.json`:
+
+| Stage | math_fractions_g5 | math_hard_percent_g6 | Used |
+|---|---|---|---|
+| intake | 28.42s | 27.55s | 28s |
+| scope_sequence | 18.36s | 21.74s | 20s |
+| lesson_design | 84.99s | 102.83s | 94s |
+| assessment_design | 42.06s | 48.26s | 45s |
+| critic | 10.31s | 14.22s | 12s |
+| package | 7.70s | 7.00s | 7s |
+
+The UI shows no percentage and no countdown, because either would claim a
+precision the client does not have. It shows the stage list, which stage
+is active, and the real elapsed clock. When the estimated schedule runs
+out before the response arrives, the indicator stops advancing and says
+the critic asked for a revision, which is what is actually happening: the
+orchestrator has routed back to lesson design for up to two regeneration
+cycles (FR3). That is why the two measured runs above finished at 311.86s
+and 533.40s against a 206s single pass estimate. Replacing estimates with
+real stage events would mean streaming generation progress the way D15
+streams tutor turns, and that is not in Phase 4 scope.
+
+### RTL and comment style audits
+
+R10 asks for logical properties rather than physical ones. A grep for
+`pl-`, `pr-`, `ml-`, `mr-`, `rounded-l`, `rounded-r`, `border-l`,
+`border-r`, `text-left` and `text-right` across every `.tsx` in
+`frontend/src` returns nothing, so the whole frontend is currently clean,
+not only the files this step wrote.
+
+D7 forbids em dashes, arrows, ellipses and semicolons in comments. The
+skeleton imported in Step 0.1 carries nine such docstrings. The one in
+`LoadingIndicator.tsx` was rewritten with the file in this step. The other
+eight sit in component files that Steps 4.2 to 4.6 rewrite, so they are
+left for those steps rather than touched here to keep this commit to its
+own scope.
+
+### Two defects the build surfaced
+
+First, a duplicated landmark. `AppShell` owns the `main` element, and six
+stub pages inside the role shells still opened their own `<main
+className="p-8">`, so every authenticated page rendered two `main`
+landmarks nested inside each other. That is invalid HTML and hands
+assistive technology two document bodies. The shell introduced the
+conflict, so it was fixed here rather than deferred to the steps that own
+those pages, by replacing the inner element with a plain `div` and letting
+the shell supply the gutter. The pages themselves still say TODO and still
+belong to Steps 4.2 to 4.6.
+
+Second, the `next build` route table under-reports the shells. It credits
+`/teacher/dashboard` and `/student/dashboard` with 87.5 kB of First Load
+JS against 190 kB for `/login`, which would suggest the authenticated
+shells ship a third less JavaScript than the login screen. They do not.
+`.next/app-build-manifest.json` shows the Firebase chunks
+(`bc9e92e6`, `69806262`, `290`) attached to `/teacher/layout` rather than
+to the page, because `ProtectedRoute` and `NavBar` are imported by the
+layout. The browser loads layout chunks and page chunks together, so the
+real first load for a shell is close to the login figure. The number to
+cite for NFR1 is the Lighthouse measurement and the manifest, not that
+column.
+
+### Measuring the acceptance criteria, and a false alarm worth recording
+
+Two of the three Step 4.1 criteria are claims about computed style under
+real conditions, so they are measured in a browser rather than asserted
+from the stylesheet. Two harnesses do it, both in `frontend/scripts/`, both
+run against a production build with the emulators and seeded users up.
+Their tooling is installed with `npm i --no-save lighthouse puppeteer-core`
+so that CI, which runs `npm ci`, is unaffected.
+
+`lighthouse_shells.mjs` exists because a plain `lighthouse` command cannot
+measure these pages. Both shells sit behind `ProtectedRoute`, so an
+unauthenticated audit is redirected to `/login` and would quietly report a
+shell URL while scoring the login screen. The script signs in with
+puppeteer first and hands Lighthouse the same browser. Two consequences
+are recorded in the output rather than hidden. Lighthouse clears storage
+before a run by default, which would sign the browser out mid audit, so
+the shell runs set `disableStorageReset` and therefore describe a
+returning visitor, not a cold first visit. The `/login` run keeps the
+default and is the cold reference. The first version of this script also
+recorded the URL it requested rather than the one Lighthouse landed on,
+which is exactly the failure it was written to prevent, so it now records
+`finalDisplayedUrl`, probes the live DOM for the nav, the landmark count
+and the active role theme, and fails the gate when a run did not measure
+the shell.
+
+`a11y_shell_probe.mjs` drives real Tab presses, because `:focus-visible`
+only engages for keyboard focus and a scripted `element.focus()` would
+prove nothing about what a keyboard user sees. It also injects a span
+carrying `animate-breathe` and reads its computed animation under both
+motion preferences, since the breathing dot lives in `LoadingIndicator`
+and no screen mounts that until Step 4.2.
+
+The false alarm. For several iterations this probe reported that the
+teacher shell had no working tab order at all: every Tab press left
+`document.activeElement` on the body, while the student shell walked
+correctly. The DOM was not the cause. A diff of the two rendered documents
+showed only the expected differences, role attribute, nav label, density
+classes, two extra links and the TODO text, with no `inert`, no stray
+`tabindex` and no `aria-hidden`. All five teacher elements were visible,
+correctly positioned and focusable programmatically, and there were no
+console errors and no DOM mutations in the header. Reversing the probe
+order showed the failure followed the role rather than the position, which
+made it look real. Four isolated variants then passed on both roles,
+plain, after `bringToFront`, after seeding focus on the body, and after an
+explicit `focus()`, each walking the teacher order correctly as skip link,
+three nav links, sign out.
+
+The cause was the probe itself. It ran focus diagnostics before the walk,
+calling `focus()` on the body and on the first link to check whether focus
+was being stolen, and that manipulation left the sequential focus
+navigation starting point in a state where Tab reported no movement. The
+walk now runs first, on a page whose focus nothing has touched, and every
+other measurement runs after it. A prefetch hypothesis was tested along
+the way, since the teacher nav has three prefetchable links and the
+student nav has only its current route, and it was rejected: disabling
+prefetch changed nothing, and the change was reverted rather than left in
+as a cargo cult fix.
+
+Two guards were kept from the investigation. The walk now fails if it
+reports the same element twice, because counting a stuck tab order as
+several stops would turn it into a pass, and it must reach the sign out
+button. An earlier run did report eight stops that were all the same skip
+link while every assertion passed, which is the same class of defect as
+the Lighthouse URL gap above: a measurement that looks like evidence and
+is not.
+
+### Step 4.1 acceptance result
+
+Gate status: MET, with the content caveat stated below.
+
+| Target | Performance | Accessibility | Best practices | FCP | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| `/login`, cold | 100 | 100 | 100 | 0.2s | 0.6s | 0ms | 0 |
+| teacher shell | 100 | 100 | 100 | 0.4s | 0.6s | 0ms | 0 |
+| student shell | 100 | 100 | 100 | 0.4s | 0.6s | 0ms | 0 |
+
+Lighthouse 12.8.2, desktop form factor, local production build. Evidence in
+`evaluation/results/dev_runs/lighthouse_shells.json`. Each shell run carries
+the proof that it measured the shell and not a redirect: matching
+`finalDisplayedUrl`, the nav present, exactly one `main` landmark, the Hebrew
+skip link, and the role theme reading `teacher` or `student` respectively.
+A CLS of 0 is the self hosted font claim holding up, since a swapped webfont
+is the usual source of shift on a page like this.
+
+The honest reading of three perfect scores: this is a shell with stub pages
+inside it. The result says the chrome, the token layer and the font loading
+cost nothing measurable, which is worth knowing before Phase 4 builds on
+them, but it is not evidence about NFR1 on a populated screen. Steps 4.2 to
+4.6 add real content, Firestore listeners and SSE streaming, and the
+measurement is worth repeating then. That is why the results file carries
+`content_caveat` rather than leaving a reader to infer it.
+
+Keyboard focus and reduced motion, from
+`evaluation/results/dev_runs/a11y_shell_probe.json`:
+
+| Role | Tab order | Ring on every stop | Reduced motion |
+|---|---|---|---|
+| teacher | skip link, 3 nav links, sign out | 3px solid | 1.8s to 0.00001s, iteration count 1 |
+| student | skip link, 1 nav link, sign out | 3px solid | 1.8s to 0.00001s, iteration count 1 |
+
+The skip link is the first stop for both roles and its settled box is inside
+the viewport, so it is genuinely reachable rather than merely present. Both
+orders of the probe give the same result.
+
+## Step 4.2 evidence, teacher Goals screen (2026-11-21)
+
+### Why the form fetches its subjects instead of listing them
+
+The Goals form must respect two facts that only the backend knows, so it
+reads them from a new `GET /api/generation/subjects` rather than carrying
+its own list.
+
+Which subjects are servable is an intersection, not a list: a subject needs
+both a curated standards snapshot on disk and an entry in the critic
+strategy map (D8). `physics` is classified but ships no snapshot, so it is
+not servable, and the POST route rejects it with 422 after the teacher has
+filled the form in.
+
+The second fact is the dangerous one. The snapshots do not cover the same
+grades. Math and science cover 4 to 6 while history covers 6 to 8, and
+`load_standards` returns an *empty slice* for a grade outside its snapshot
+rather than raising. A teacher asking for history in grade 4 would
+therefore get a full run, minutes long, in which the Intake Agent had no
+standards to cite, and nothing anywhere would report an error. The grade
+select is driven per subject by the catalog so that combination cannot be
+submitted, and a test asserts every advertised grade yields a non empty
+slice.
+
+The endpoint is purely additive to the frozen Phase 2 contract: the
+re-exported spec diff shows zero removed lines. `draftCorpus` is carried
+through so the form says the snapshot is still awaiting team validation
+instead of presenting a draft as settled (R1), which it currently does for
+all three subjects.
+
+### A real NFR7 defect, found by demoing the timeout path
+
+The acceptance asks for the timeout path demoed against the real backend.
+Running it returned **500, not 504**, and the UI showed the generic server
+error rather than the timeout message with its retry.
+
+A budget overrun has two exits and only one was mapped. `run_pipeline`
+wraps the graph in `asyncio.wait_for` and converts its timeout into
+`GenerationTimeoutError`, which `app/main.py` turns into the
+`{"error": "generation_timeout", "retriable": true}` 504 the frontend
+degrades on. But `agents/base.py` also gives every model call the
+*remaining run budget* as its own timeout, so an overrun can instead
+surface as `LLMTimeoutError` from inside a stage. That escaped
+`run_pipeline` uncaught and became a bare 500 with no retriable flag.
+
+This is not an artifact of the tiny budget used to force it. Because the
+inner timeout is derived from the remaining budget, the model call and the
+outer timer expire at the same instant, so which one raises first is a
+race. NFR7's graceful degradation would have worked only on the coin flip
+where the outer timer won, and the existing 504 test only ever exercised
+that side. `run_pipeline` now maps `LLMTimeoutError` to
+`GenerationTimeoutError`, and a second endpoint test pins the other exit,
+asserting the same 504 body and that nothing was persisted and no scorer
+scheduled for a run that produced no package.
+
+### The demo harness passed on the wrong thing
+
+Worth recording because it is the third time in Phase 4 that a measurement
+looked like evidence and was not. The first version of
+`dev_goals_screen_demo.mjs` judged the timeout path by whether a retriable
+error appeared with the form state intact. Those were all true for the
+500, so it reported `ok: true` while the contract it existed to check was
+broken. It now requires the response to be a 504 and the visible error to
+be the timeout message specifically, not merely some retriable error.
+
+### Resolved: the keystroke drop was the harness, not the app
+
+Found while trying to fill the Goals form through the UI. First recorded
+here as an open application defect that would make FR1 unusable. That
+conclusion was wrong, and the correction is kept in place rather than
+deleted, because the way it was reached is the point.
+
+Symptom as first recorded: on an authenticated page, an input accepts the
+first one to three characters and then stops. `document.activeElement`
+still reports the field, `document.hasFocus()` is true, the node is not
+replaced, there are no DOM mutations and no console errors, but native
+`keydown` stops firing on the element altogether.
+
+Measured again against a production build, the symptom is sharper than
+that. It is not a partial drop. **No trusted key event is delivered at
+all**, zero `keydown` on a capture phase `window` listener, while on
+`/login` in the same browser session the same probe records eight of
+eight.
+
+What it is not, each ruled out by measurement rather than reasoning:
+
+| Suspected | Result |
+|---|---|
+| Lifting form state to the page (NFR7) | Not it. A sibling input with purely local state fails the same way |
+| React controlled inputs | Not it. A vanilla non React input injected into the same page also fails |
+| `AppShell`, the nav or the skip link | Not it. Removing the shell made it worse, not better |
+| Next `<Link>` prefetch on the teacher nav | Not it. `prefetch={false}` changed nothing, and the change was reverted |
+| A headless browser artifact | Partly it. Headful reproduces, but every reproduction went through CDP key dispatch, which is the actual variable |
+| `puppeteer` mixing `insertText` with key events | Not it. Pure ASCII through key events alone fails too |
+| An auth re render storm or a remount | Not it. Two `onIdTokenChanged` emissions and a single form mount during the failure, later confirmed by 0 blur events and 0 node swaps across 3s |
+
+What it correlates with is being signed in. A vanilla input typed at 100ms
+intervals is perfect on `/login`, and fails on `/teacher/dashboard` and on
+`/student/dashboard`, neither of which contains a form at all. Those two
+shells are Step 4.1 work, so this predates Step 4.2.
+
+It also retroactively explains the Step 4.1 investigation recorded above,
+where the teacher shell appeared to have no working tab order while the
+student shell walked correctly. That was the same mechanism, key events not
+reaching the document, and the conclusion there that the tab order itself
+was sound still holds.
+
+The suspect named here first was three `useAuth` subscriptions per shell
+page. That was also wrong on its facts: `NavBar` does not call `useAuth`
+at all, so `/teacher/dashboard` holds exactly one subscription, and it
+fails. No fix was built on the guess.
+
+What settled it was measuring the channels around the keyboard instead of
+the keyboard, on `/teacher/create`, signed in, in one run:
+
+| Channel | Result |
+|---|---|
+| Trusted key events (`page.type`, `page.keyboard.press`, raw CDP `Input.dispatchKeyEvent`) | Nothing delivered. 0 `keydown` |
+| Trusted mouse events | Delivered. `mousedown` fires |
+| CDP `Input.insertText` | Delivered. Text lands in the field |
+| Focus stability, 30 samples over 3s | Textarea focused in 30 of 30, 0 `blur` events, 0 node swaps, same node throughout |
+| Frames | One. No iframe, in the document or in puppeteer's view |
+| Long tasks, console errors | None |
+
+No application mechanism can produce that combination. Page code cannot
+suppress a `keydown` that never arrives, and it is not a remount or stolen
+focus, because the field holds focus for the whole window with no blur and
+no node swap. A renderer that accepts mouse input and `insertText` is a
+live renderer. The missing channel is CDP key delivery to that tab, which
+belongs to the test rig.
+
+The confirmation from the other direction: `scripts/dev_goals_screen_demo.mjs`
+passes unchanged, today, against this build. It drives the form with native
+value setters and real clicks and never dispatches a key on an
+authenticated page, which is exactly the channel that works.
+
+Withdrawn: the claim that a teacher would lose most of what they type and
+that FR1 is unusable. There is no evidence for it. The honest residue is
+that the exact rig mechanism is unnamed, and that nobody has yet typed on a
+real keyboard on one of these pages. That check costs a person ten seconds
+and is still worth doing, but it is not a release blocker and it does not
+gate Phase 4.
+
+Rule this leaves for every later UI harness, and the reason Step 4.3 and
+Step 4.4 must not be written around `page.type`: text goes in through the
+native value setter plus an `input` event, the way `setField` does it, and
+clicks go in as real clicks. A harness that types on an authenticated page
+measures the rig, not the product.
+
+The Step 4.1 tab order investigation above was the same channel failing,
+so its conclusion that the tab order itself is sound still holds. The one
+check that would have caught this at the start, and that three rejected
+hypotheses did not include, was asking whether anything else about the page
+was unhealthy at the moment the keys vanished. Focus, mouse and the DOM
+were all fine, and that was knowable on day one.
+
+### The dev proxy cannot carry a generation, measured at 30s
+
+The happy path failed its first attempt with a 500, and the backend log
+showed no completed POST at all. The Next log named the cause:
+`Failed to proxy http://localhost:8000/api/generation Error: socket hang up`.
+
+The rewrite in `next.config.mjs` has a hard timeout. Measured with a
+stand in server that answers after a requested delay, so it cost no model
+calls:
+
+| Upstream delay | Through the proxy |
+|---|---|
+| 10s | 200 after 10.01s |
+| 35s | 500 after 30.01s |
+| 65s | 500 after 30.00s |
+| 125s | 500 after 30.00s |
+
+Exactly 30.00s, every time. A generation runs 4 to 11 minutes, so through
+that proxy the FR1 happy path could never arrive, and neither could the
+NFR7 504: the proxy's own 500 replaces it long before the server's 900s
+budget expires. The earlier timeout demo passed only because the forced 5s
+budget let the backend answer inside the 30s window, which is a good
+illustration of why a passing test on a shortened budget is not evidence
+about the real one.
+
+`lib/api/generation.ts` now sends both generation calls straight to the
+backend origin through `NEXT_PUBLIC_BACKEND_ORIGIN`, falling back to the
+proxy when it is unset. CORS already allowed the frontend origin. The 30s
+limit is recorded as a comment in `next.config.mjs` so nobody routes long
+calls back through it. Short calls still use the proxy and the single
+origin it gives.
+
+Consequence worth knowing: calling the backend cross origin makes the
+browser send a CORS preflight, so each call now shows twice in a network
+trace, once as `OPTIONS` and once as the real method. The backend log
+confirms one `POST /api/generation` and one `OPTIONS /api/generation` per
+generation, not two generations.
+
+### A client disconnect does not cancel a generation
+
+The proxy aborted that first attempt at 30s and the teacher saw an error,
+but the backend kept working and persisted the draft anyway, at 17:01:56,
+about three minutes later. The module is in the emulator with no teacher
+ever having seen it.
+
+That is the correct behaviour to have noticed and the wrong behaviour to
+leave unexamined. Server side cancellation on client disconnect would
+waste the work already done, while persisting an orphan means a teacher who
+retried would find two drafts of the same brief. Neither is obviously
+right, and the Review Dashboard in Step 4.3 is where a teacher would
+encounter it, so the decision belongs there rather than being made silently
+here.
+
+### Step 4.2 acceptance result
+
+Gate status: MET. Evidence in
+`evaluation/results/dev_runs/goals_screen_demo.json`.
+
+| Path | Result |
+|---|---|
+| happy | `POST /api/generation` 200 in 179.24s, staged loader shown with all six stages, routed to `/teacher/review/8RVqoallf52n5MkHmltE` |
+| timeout | 504 with `retriable: true`, the timeout message shown rather than the generic server error, retry offered, still on the create page, form state fully preserved including both topic chips and the Hebrew free text |
+
+The persisted module was read back out of the emulator: correct title,
+subject, grade, `creatorTeacherKey` of `t1`, three lessons, and the five
+`qualityScores` keys. R6 was re-checked at the same time across all 15
+exercise docs, none of which carries `correctAnswer` or `socraticHints`.
+
+One caveat about the evidence file: the happy record was produced before
+the harness learned to record the request method, so it has no
+`generation_status` field, while the timeout record does. Its 200 is
+visible in that record's `generation_responses` list instead. The run was
+not repeated purely to even out a field name.

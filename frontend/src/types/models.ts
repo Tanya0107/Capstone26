@@ -70,6 +70,49 @@ export interface ExerciseSolution {
 }
 
 // ---------- Distribution & Progress Bank ----------
+/** One lesson as stored on the module doc. Exercises are decoupled docs. */
+export interface LessonMeta {
+  title: string;
+  objectives: string[];
+  hook: string;
+  exerciseKeys: string[];
+}
+
+/**
+ * The curriculumModules doc as the backend actually writes it. CurriculumModule
+ * above is the narrow mirror of the shared fields; this is the whole document,
+ * which is what the Review Dashboard reassembles a package from (FR5).
+ * summary is optional because modules persisted before Step 4.3 lack one.
+ */
+export interface StoredCurriculumModule {
+  moduleId?: string;
+  title: string;
+  summary?: string | null;
+  subject: string;
+  gradeLevel: string;
+  difficultyLevel: 1 | 2 | 3 | 4 | 5;
+  creatorTeacherKey: string;
+  status: "draft" | "published";
+  assignedStudentKeys: string[];
+  createdAt?: string | null;
+  weeklySequence: string[];
+  lessons: LessonMeta[];
+  assessment?: AssessmentBundle | null;
+  criticReport?: CriticReport | null;
+  qualityScores?: QualityScores | null;
+  generationLatencySeconds?: number | null;
+}
+
+/** The exercises doc, student safe by construction: no answer field exists (R6, D11). */
+export interface StoredExercise {
+  exerciseId?: string;
+  moduleKey: string;
+  order: number;
+  prompt: string;
+  scaffoldSteps: string[];
+  assignedStudentKeys: string[];
+}
+
 export interface Assignment {
   assignmentId: string;
   moduleKey: string;
@@ -149,6 +192,23 @@ export interface GenerationRequest {
   gradeLevel: string;
   difficultyLevel: number;
   standardsHint?: string;
+}
+
+// GET /api/generation/subjects. The Goals screen offers only servable
+// subjects, so the form cannot submit something the route would 422.
+// grades is per subject because the snapshots do not cover the same ones,
+// and a grade outside the list means an empty standards slice.
+export interface SubjectOption {
+  subject: string;
+  subjectType: string;
+  grades: string[];
+  // True while the standards snapshot is still pending team validation.
+  // The form must label the subject a draft rather than stay silent (R1).
+  draftCorpus: boolean;
+}
+
+export interface SubjectCatalog {
+  subjects: SubjectOption[];
 }
 
 export interface CriticIssue {

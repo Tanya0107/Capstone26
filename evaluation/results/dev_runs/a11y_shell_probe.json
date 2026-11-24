@@ -1,0 +1,151 @@
+{
+  "label": "DEV measurement, not an evaluation result (R1)",
+  "measures": "BUILD_GUIDE Step 4.1 acceptance, keyboard focus visible and reduced motion respected",
+  "timestamp": "2026-11-19T16:38:06.619Z",
+  "base_url": "http://localhost:3000",
+  "min_outline_px": 3,
+  "roles": [
+    {
+      "role": "student",
+      "path": "/student/dashboard",
+      "focus_stops": [
+        {
+          "tag": "a",
+          "testid": null,
+          "label": "דלגו לתוכן הראשי",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(129, 62, 14)",
+          "transform": "matrix(1, 0, 0, 1, 0, -43.1875)",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "a",
+          "testid": "nav-link-/student/dashboard",
+          "label": "המשימות שלי",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(129, 62, 14)",
+          "transform": "none",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "button",
+          "testid": "nav-signout",
+          "label": "יציאה",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(129, 62, 14)",
+          "transform": "none",
+          "focus_ring_visible": true
+        }
+      ],
+      "focus_advanced": true,
+      "reached_sign_out": true,
+      "skip_link_is_first_stop": true,
+      "every_stop_has_a_visible_ring": true,
+      "skip_link": {
+        "text": "דלגו לתוכן הראשי",
+        "top": 0,
+        "visible_in_viewport": true
+      },
+      "motion_default": {
+        "animation_name": "breathe",
+        "animation_duration": "1.8s",
+        "animation_iteration_count": "infinite",
+        "skip_link_transition_duration": "0.15s"
+      },
+      "motion_reduced": {
+        "animation_name": "breathe",
+        "animation_duration": "1e-05s",
+        "animation_iteration_count": "1",
+        "skip_link_transition_duration": "1e-05s"
+      },
+      "reduced_motion_respected": true,
+      "console_errors": []
+    },
+    {
+      "role": "teacher",
+      "path": "/teacher/dashboard",
+      "focus_stops": [
+        {
+          "tag": "a",
+          "testid": null,
+          "label": "דלגו לתוכן הראשי",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(15, 82, 87)",
+          "transform": "matrix(1, 0, 0, 1, 0, -43.1875)",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "a",
+          "testid": "nav-link-/teacher/dashboard",
+          "label": "המודולים שלי",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(15, 82, 87)",
+          "transform": "none",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "a",
+          "testid": "nav-link-/teacher/create",
+          "label": "יצירת יחידה",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(15, 82, 87)",
+          "transform": "none",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "a",
+          "testid": "nav-link-/teacher/analytics",
+          "label": "נתוני כיתה",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(15, 82, 87)",
+          "transform": "none",
+          "focus_ring_visible": true
+        },
+        {
+          "tag": "button",
+          "testid": "nav-signout",
+          "label": "יציאה",
+          "outline_style": "solid",
+          "outline_width": "3px",
+          "outline_color": "rgb(15, 82, 87)",
+          "transform": "none",
+          "focus_ring_visible": true
+        }
+      ],
+      "focus_advanced": true,
+      "reached_sign_out": true,
+      "skip_link_is_first_stop": true,
+      "every_stop_has_a_visible_ring": true,
+      "skip_link": {
+        "text": "דלגו לתוכן הראשי",
+        "top": 0,
+        "visible_in_viewport": true
+      },
+      "motion_default": {
+        "animation_name": "breathe",
+        "animation_duration": "1.8s",
+        "animation_iteration_count": "infinite",
+        "skip_link_transition_duration": "0.15s"
+      },
+      "motion_reduced": {
+        "animation_name": "breathe",
+        "animation_duration": "1e-05s",
+        "animation_iteration_count": "1",
+        "skip_link_transition_duration": "1e-05s"
+      },
+      "reduced_motion_respected": true,
+      "console_errors": []
+    }
+  ],
+  "keyboard_focus_visible": true,
+  "reduced_motion_respected": true,
+  "skip_link_reachable_first": true,
+  "gate_met": true
+}

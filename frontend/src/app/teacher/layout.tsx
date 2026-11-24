@@ -1,10 +1,11 @@
-/** Teacher shell: route guard now (NFR4), nav lands in Phase 4, Step 4.1. */
+/** Teacher shell: route guard (NFR4) plus the dense teacher chrome (Step 4.1). */
+import AppShell from "@/components/shared/AppShell";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute role="teacher">
-      <section>{children}</section>
+      <AppShell role="teacher">{children}</AppShell>
     </ProtectedRoute>
   );
 }

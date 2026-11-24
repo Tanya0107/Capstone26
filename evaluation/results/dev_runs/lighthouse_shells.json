@@ -1,0 +1,89 @@
+{
+  "label": "DEV measurement, not an evaluation result (R1)",
+  "measures": "BUILD_GUIDE Step 4.1 acceptance, Lighthouse performance on both role shells as the NFR1 proxy",
+  "timestamp": "2026-11-19T16:39:23.176Z",
+  "base_url": "http://localhost:3000",
+  "target_performance": 90,
+  "environment": "local production build via next start, Firebase emulators, seeded demo users",
+  "content_caveat": "Step 4.1 delivers the shells only. The pages inside them are still TODO stubs until Steps 4.2 to 4.6, so these scores describe the chrome, the token layer and the fonts, not a populated screen. Re-measure once real content lands.",
+  "runs": [
+    {
+      "target": "login",
+      "url": "http://localhost:3000/login",
+      "final_url": "http://localhost:3000/login",
+      "authenticated": false,
+      "storage_reset": true,
+      "storage_reset_note": "default Lighthouse behaviour, so this is a cold first visit",
+      "performance": 100,
+      "accessibility": 100,
+      "best_practices": 100,
+      "metrics": {
+        "first-contentful-paint": "0.2 s",
+        "largest-contentful-paint": "0.6 s",
+        "total-blocking-time": "0 ms",
+        "cumulative-layout-shift": "0",
+        "speed-index": "0.2 s"
+      },
+      "lighthouse_version": "12.8.2",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "target": "teacher",
+      "url": "http://localhost:3000/teacher/dashboard",
+      "final_url": "http://localhost:3000/teacher/dashboard",
+      "measured_the_shell": true,
+      "probe": {
+        "pathname": "/teacher/dashboard",
+        "nav_present": true,
+        "main_landmarks": 1,
+        "skip_link": "דלגו לתוכן הראשי",
+        "role_theme": "teacher"
+      },
+      "authenticated": true,
+      "storage_reset": false,
+      "storage_reset_note": "disabled because the Firebase session lives in IndexedDB, so this is a returning visitor, not a cold first visit",
+      "performance": 100,
+      "accessibility": 100,
+      "best_practices": 100,
+      "metrics": {
+        "first-contentful-paint": "0.4 s",
+        "largest-contentful-paint": "0.6 s",
+        "total-blocking-time": "0 ms",
+        "cumulative-layout-shift": "0",
+        "speed-index": "0.5 s"
+      },
+      "lighthouse_version": "12.8.2",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    {
+      "target": "student",
+      "url": "http://localhost:3000/student/dashboard",
+      "final_url": "http://localhost:3000/student/dashboard",
+      "measured_the_shell": true,
+      "probe": {
+        "pathname": "/student/dashboard",
+        "nav_present": true,
+        "main_landmarks": 1,
+        "skip_link": "דלגו לתוכן הראשי",
+        "role_theme": "student"
+      },
+      "authenticated": true,
+      "storage_reset": false,
+      "storage_reset_note": "disabled because the Firebase session lives in IndexedDB, so this is a returning visitor, not a cold first visit",
+      "performance": 100,
+      "accessibility": 100,
+      "best_practices": 100,
+      "metrics": {
+        "first-contentful-paint": "0.4 s",
+        "largest-contentful-paint": "0.6 s",
+        "total-blocking-time": "0 ms",
+        "cumulative-layout-shift": "0",
+        "speed-index": "0.5 s"
+      },
+      "lighthouse_version": "12.8.2",
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    }
+  ],
+  "acceptance_gate": "Both role shells scored at or above 90 on performance, so the gate is MET.",
+  "gate_met": true
+}

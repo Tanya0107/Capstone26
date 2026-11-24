@@ -69,6 +69,26 @@ in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
     critic strategy map at stage 5, which would waste minutes of
     generation on a request that cannot succeed.
 
+- Step 4.2: new endpoint `GET /api/generation/subjects`, returning
+  `SubjectCatalog` (a list of `SubjectOption`: `subject`, `subjectType`,
+  `grades`, `draftCorpus`). Purely additive, the frozen Phase 2 paths and
+  schemas are unchanged. Teacher auth, same as the POST.
+  It exists because the Goals screen must respect two facts that only the
+  backend knows. Which subjects are servable is the intersection of the
+  standards snapshots on disk and the critic strategy map, exactly the
+  pair the POST route checks before spending anything (D8). Which grades
+  are usable differs per subject, since the snapshots do not cover the
+  same range: math and science cover 4 to 6 while history covers 6 to 8.
+  A grade outside a snapshot is the dangerous case, because
+  `load_standards` returns an empty slice rather than raising, so the
+  Intake Agent would cite nothing and the run would produce a weak unit
+  with no error anywhere. Hardcoding either list in the frontend would
+  drift the moment a snapshot is added or extended, and the form would
+  then offer a combination the route rejects, or that silently empty
+  grade. `draftCorpus` is carried through so the form can say the
+  snapshot is still pending team validation instead of presenting a draft
+  as settled (R1). Mirrored in `models.ts`, frozen spec re-exported.
+
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
 The book's Fig 4 stores `correctAnswer` and `socraticHints` on the exercise
@@ -108,3 +128,38 @@ the audience onto the content docs at publish time:
 Trade-off: publish fans out one array write per exercise doc (batched, ~10-20
 docs per module at capstone scale) in exchange for rules-enforceable
 client-side reads that keep the NFR3 onSnapshot listeners.
+
+## Step 4.3 post freeze notes (Review Dashboard)
+
+No endpoint was added or changed, so `docs/openapi.phase2.json` is untouched.
+The Review Dashboard uses `POST /api/feedback/edits` exactly as frozen, and
+publishing is a client side batched Firestore write, which is what the
+denormalized audience design above already assumed.
+
+Two stored document shapes are now typed, because the Review Dashboard
+reassembles a package from the collections rather than from an endpoint:
+
+- `StoredCurriculumModule` is the whole `curriculumModules` doc as
+  `core/firestore.save_curriculum_package` writes it. `CurriculumModule`
+  remains the narrow mirror of the fields shared with other readers. The
+  difference mattered: the write side had always persisted `weeklySequence`,
+  `lessons`, `assessment`, `criticReport` and `qualityScores`, none of which
+  appeared in any schema, so nothing would have failed if one were dropped.
+- `StoredExercise` is the student safe `exercises` doc. It has no answer
+  field to populate, which makes R6 a property of the type rather than a
+  convention.
+
+`summary` is now persisted on the module doc. The Package Agent had always
+produced a teacher guide summary and `save_curriculum_package` discarded it,
+so the Review Dashboard, its only reader, could never show it. It is
+optional on the schema because modules written before this change have none.
+
+One record per edited field goes to `POST /api/feedback/edits`, not one per
+save. The endpoint stores an edit only when its cosine distance exceeds
+`EDIT_SIGNIFICANCE_THRESHOLD` (0.15), and the stored body is an "instead of
+X, the teacher preferred Y" pair. A single record carrying a whole module
+would bury one rewritten hook under all the text that did not change, score
+near zero and be discarded, so a real edit would teach the memory bank
+nothing. Appends and deletions are not filed at all, since a pair with one
+empty side is not a preference and its distance would be meaningless.
+

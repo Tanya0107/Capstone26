@@ -102,6 +102,11 @@ def save_curriculum_package(package: CurriculumPackage, teacher_key: str) -> str
     module_doc = module.model_dump(by_alias=True, exclude={"module_id", "created_at"})
     module_doc.update({
         "createdAt": firestore.SERVER_TIMESTAMP,
+        # The Package Agent writes a teacher guide summary and the Review
+        # Dashboard is its only reader, so dropping it here discarded the
+        # output entirely. StoredCurriculumModule keeps it optional because
+        # modules persisted before this change do not carry one.
+        "summary": package.summary,
         "weeklySequence": package.weekly_sequence,
         "lessons": lessons_meta,
         "assessment": package.assessment.model_dump(by_alias=True),

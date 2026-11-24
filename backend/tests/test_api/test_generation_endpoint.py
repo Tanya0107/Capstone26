@@ -234,3 +234,121 @@ async def test_unservable_subject_is_rejected_before_any_work(
         )
     assert response.status_code == 422
     assert called == []
+
+
+# --------------------------------------- GET /api/generation/subjects (FR1)
+# The Goals screen must offer only subjects the POST route would accept, and
+# only grades whose standards slice is non empty. These tests pin that
+# invariant rather than the current corpus contents, so adding a subject
+# snapshot does not break them.
+async def test_subject_catalog_offers_only_what_the_route_accepts(teacher_client):
+    """Every advertised subject must survive the POST route's own guard.
+
+    This is the point of the endpoint. If the catalog could advertise a
+    subject _validate_subject rejects, the form would submit a request
+    guaranteed to 422 after the teacher filled it in.
+    """
+    client, _, _ = teacher_client
+    async with client:
+        response = await client.get("/api/generation/subjects")
+    assert response.status_code == 200
+
+    subjects = [option["subject"] for option in response.json()["subjects"]]
+    assert subjects, "the catalog must not be empty"
+    for subject in subjects:
+        generation_route._validate_subject(subject)
+
+
+async def test_subject_catalog_excludes_classified_subjects_with_no_corpus(
+    teacher_client,
+):
+    """physics is classified in SUBJECT_TYPES but ships no snapshot, so it
+    is not servable and must not reach the form (D8)."""
+    client, _, _ = teacher_client
+    async with client:
+        response = await client.get("/api/generation/subjects")
+
+    subjects = [option["subject"] for option in response.json()["subjects"]]
+    assert "physics" not in subjects
+    assert "art" not in subjects
+
+
+async def test_subject_catalog_grades_come_from_the_snapshot(teacher_client):
+    """Grades must match the corpus the Intake Agent will actually read,
+    and must be ordered numerically rather than lexically."""
+    from app.agents.standards.loader import corpus_profile
+
+    client, _, _ = teacher_client
+    async with client:
+        response = await client.get("/api/generation/subjects")
+
+    for option in response.json()["subjects"]:
+        profile = corpus_profile(option["subject"])
+        assert option["grades"] == profile["grades"]
+        assert option["grades"], f"{option['subject']} advertises no usable grade"
+        assert option["draftCorpus"] == profile["draft"]
+        numeric = [int(g) for g in option["grades"] if g.isdigit()]
+        assert numeric == sorted(numeric)
+        # Every advertised grade must yield a non empty slice, which is the
+        # whole reason the form drives its grade select from this list.
+        from app.agents.standards.loader import load_standards
+
+        for grade in option["grades"]:
+            assert load_standards(option["subject"], grade)
+
+
+async def test_subject_catalog_requires_a_teacher():
+    """A student token must not read the catalog (NFR4)."""
+    app.dependency_overrides[deps.verify_token] = override_role("student")
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/api/generation/subjects")
+        assert response.status_code == 403
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_grade_sort_key_orders_double_digit_grades_after_single():
+    """Plain string sorting would put 10 before 4, which would mislabel a
+    secondary school corpus."""
+    from app.agents.standards.loader import _grade_sort_key
+
+    assert sorted(["10", "4", "9"], key=_grade_sort_key) == ["4", "9", "10"]
+    # A non numeric grade label sorts last rather than raising.
+    assert sorted(["5", "gifted"], key=_grade_sort_key) == ["5", "gifted"]
+
+
+async def test_llm_budget_overrun_also_returns_504(teacher_client, monkeypatch):
+    """The other half of the timeout contract (NFR7).
+
+    test_generation_timeout_504 above covers the orchestrator's outer
+    timer. This covers an overrun that surfaces inside a model call, which
+    is what a real one usually looks like, since each call is given the
+    remaining run budget as its own timeout. Both must produce the same
+    504 body, otherwise the frontend keeps the form and offers a retry only
+    when the outer timer happened to win the race.
+    """
+    from tests.test_agents.fakes import BudgetExhaustedStage
+
+    client, saved, scheduled = teacher_client
+    agents = fake_agents([True])
+    agents["intake"] = BudgetExhaustedStage()
+
+    async def real_pipeline_with_exhausted_budget(request, rag_context):
+        return await real_run_pipeline(
+            request, rag_context, agents=agents, timeout_s=30
+        )
+
+    monkeypatch.setattr(
+        generation_route, "run_pipeline", real_pipeline_with_exhausted_budget
+    )
+    async with client:
+        response = await client.post("/api/generation", json=VALID_PAYLOAD)
+
+    assert response.status_code == 504
+    assert response.json() == {"error": "generation_timeout", "retriable": True}
+    # Nothing was persisted and no scorer was scheduled for a run that
+    # never produced a package.
+    assert saved == {}
+    assert scheduled == []

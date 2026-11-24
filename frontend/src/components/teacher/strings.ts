@@ -1,0 +1,202 @@
+/** Teacher surface UI strings, Hebrew per D5 and R10. */
+export const strings = {
+  // Goals Enrichment Screen (FR1, book Fig 6)
+  goalsTitle: "יצירת יחידת העשרה",
+  goalsIntro:
+    "תארו את מטרות ההעשרה והמערכת תבנה יחידה מלאה: רצף שבועי, שיעורים, תרגילים והערכה.",
+
+  subjectLabel: "מקצוע",
+  subjectPlaceholder: "בחרו מקצוע",
+  subjectTypeQuantitative: "מקצוע חישובי",
+  subjectTypeOpenEnded: "מקצוע עיוני",
+  subjectDraftCorpus: "מאגר התקנים למקצוע זה עדיין בטיוטה ומחכה לאימות",
+
+  gradeLabel: "כיתה",
+  gradePlaceholder: "בחרו כיתה",
+  gradeNeedsSubject: "בחרו מקצוע כדי לראות את הכיתות הזמינות",
+
+  goalsLabel: "מטרות ההעשרה",
+  goalsHint: "לדוגמה: להעמיק את תחושת השבר דרך הקשרים מהחיים",
+
+  topicsLabel: "נושאים",
+  topicsHint: "הקלידו נושא והקישו Enter להוספה",
+  topicsAdd: "הוספה",
+  topicsRemove: "הסרת הנושא",
+  topicsEmpty: "לא נבחרו נושאים. אפשר להמשיך בלעדיהם.",
+
+  difficultyLabel: "רמת קושי",
+  difficultyHint: "1 היא הרמה הבסיסית, 5 היא המאתגרת",
+
+  standardsHintLabel: "הנחיה לגבי תקנים",
+  standardsHintOptional: "אופציונלי",
+  standardsHintHint: "אם יש תקן או נושא מתוכנית הלימודים שחייב להופיע, כתבו אותו כאן",
+
+  submit: "בנו את היחידה",
+  submitting: "בונה...",
+
+  // Validation, mirrors GenerationRequest
+  errorSubjectRequired: "יש לבחור מקצוע",
+  errorGradeRequired: "יש לבחור כיתה",
+  errorGradeUnavailable: "הכיתה הזו אינה נתמכת במקצוע שנבחר",
+  errorGoalsRequired: "יש לתאר את מטרות ההעשרה",
+  errorDifficultyRange: "רמת הקושי חייבת להיות בין 1 ל-5",
+
+  // Catalog loading
+  catalogLoading: "טוען מקצועות...",
+  catalogFailed: "לא ניתן לטעון את רשימת המקצועות",
+  catalogRetry: "נסו שוב",
+  catalogEmpty: "אין מקצועות זמינים ליצירה כרגע",
+
+  // NFR7 degradation
+  errorTimeoutTitle: "היצירה חרגה ממסגרת הזמן",
+  errorTimeoutBody:
+    "הפרטים שמילאתם נשמרו. אפשר לנסות שוב, או לצמצם את מספר הנושאים ולהוריד את רמת הקושי כדי לקצר את התהליך.",
+  errorForbiddenTitle: "אין הרשאה ליצירה",
+  errorForbiddenBody: "התחברו מחדש ונסו שוב.",
+  errorValidationTitle: "הבקשה נדחתה",
+  errorNetworkTitle: "התקשורת עם השרת נכשלה",
+  errorNetworkBody: "הפרטים שמילאתם נשמרו. בדקו את החיבור ונסו שוב.",
+  errorServerTitle: "שגיאה בשרת",
+  errorServerBody: "הפרטים שמילאתם נשמרו. אפשר לנסות שוב.",
+  errorRetry: "נסו שוב",
+  errorDismiss: "חזרה לטופס",
+
+  // ---- Review Dashboard (FR5 to FR7, book Fig 7) ----
+  reviewTitle: "בדיקת היחידה ואישורה",
+  reviewIntro:
+    "עברו על היחידה, ערכו כל מה שצריך ואז פרסמו אותה לתלמידים. השינויים שלכם נשמרים גם כדי לשפר יחידות הבאות.",
+  reviewLoading: "טוען את היחידה...",
+  reviewNotFoundTitle: "היחידה לא נמצאה",
+  reviewNotFoundBody: "ייתכן שהיא נמחקה, או שהקישור שגוי.",
+  reviewForbiddenTitle: "אין הרשאה ליחידה הזו",
+  reviewForbiddenBody: "אפשר לערוך רק יחידות שיצרתם.",
+  reviewBackToCreate: "ליצירת יחידה חדשה",
+
+  moduleSubject: "מקצוע",
+  moduleGrade: "כיתה",
+  moduleDifficulty: "רמת קושי",
+  moduleStatusLabel: "מצב",
+  moduleStatusDraft: "טיוטה",
+  moduleStatusPublished: "פורסמה",
+  moduleSummaryLabel: "מדריך למורה",
+  weeklySequenceLabel: "רצף שבועי",
+  assessmentLabel: "הערכה",
+  assessmentRubric: "מדדי הערכה",
+  assessmentDiagnostics: "שאלות אבחון",
+  assessmentExitTickets: "כרטיסי יציאה",
+
+  lessonsLabel: "שיעורים",
+  lessonHeading: "שיעור",
+  lessonTitleLabel: "שם השיעור",
+  lessonHookLabel: "פתיחה",
+  lessonObjectivesLabel: "מטרות",
+  lessonObjectiveAdd: "הוספת מטרה",
+  lessonObjectiveRemove: "הסרת המטרה",
+  lessonAdd: "הוספת שיעור",
+  lessonDelete: "מחיקת השיעור",
+  lessonDeleteConfirm: "למחוק את השיעור וכל התרגילים שבו?",
+  lessonEmpty: "אין עדיין שיעורים ביחידה.",
+
+  exerciseHeading: "תרגיל",
+  exercisePromptLabel: "שאלה",
+  exerciseAnswerLabel: "תשובה נכונה",
+  exerciseAnswerNote: "התשובות והרמזים נשמרים בנפרד ואינם נגישים לתלמידים",
+  exerciseScaffoldLabel: "שלבי פירוק",
+  exerciseScaffoldAdd: "הוספת שלב",
+  exerciseScaffoldRemove: "הסרת השלב",
+  exerciseHintsLabel: "רמזים סוקרטיים",
+  exerciseHintAdd: "הוספת רמז",
+  exerciseHintRemove: "הסרת הרמז",
+  exerciseHintPlaceholder: "שאלה שמקדמת את התלמיד בלי לגלות את התשובה",
+  exerciseAdd: "הוספת תרגיל",
+  exerciseDelete: "מחיקת התרגיל",
+  exerciseDeleteConfirm: "למחוק את התרגיל?",
+  exerciseSolutionMissing: "לא נמצאה תשובה שמורה לתרגיל הזה",
+  exerciseFlagged: "הביקורת סימנה את התרגיל הזה",
+
+  criticTitle: "דוח הביקורת",
+  criticApproved: "הביקורת אישרה את היחידה",
+  criticNotApproved: "הביקורת לא אישרה את היחידה",
+  criticCycles: "סבבי תיקון שבוצעו",
+  criticIssuesLabel: "הערות שנותרו פתוחות",
+  criticNoIssues: "לא נותרו הערות פתוחות",
+  criticIssueExercise: "תרגיל",
+  criticNeedsYou:
+    "גם יחידה שאושרה טעונה בדיקה שלכם. הביקורת אוטומטית ואינה תחליף לשיקול דעת מקצועי.",
+
+  scoresTitle: "מדדי טיוטה",
+  scoresDisclaimer:
+    "המספרים האלה הם אינדיקציה לטיוטה הזו בלבד, לא תוצאות הערכה של המערכת. הם מודדים דמיון ליחידת ייחוס, ולא נכונות.",
+  scoresRougeL: "ROUGE-L",
+  scoresBertScore: "BERTScore F1",
+  scoresBleu: "BLEU",
+  scoresPending: "טרם חושב",
+  scoresBleuOffline: "מחושב רק בהרצת הערכה נפרדת",
+  scoresReferenceLabel: "נמדד מול יחידת הייחוס",
+  scoresReferenceNone: "לא נמצאה יחידת ייחוס",
+  scoresReferenceDraft:
+    "יחידת הייחוס עצמה עדיין בטיוטה ולא אומתה, ולכן המספר הוא אינדיקציה בלבד",
+  scoresReferenceValidated: "יחידת הייחוס אומתה",
+  latencyLabel: "זמן היצירה",
+  latencySeconds: "שניות",
+
+  saveButton: "שמירת השינויים",
+  saving: "שומר...",
+  saveNoChanges: "אין שינויים לשמירה",
+  saveSuccess: "השינויים נשמרו",
+  saveFailedTitle: "השמירה נכשלה",
+  saveRetry: "נסו שוב",
+  feedbackStoredOne: "שינוי אחד נלמד לטובת יחידות הבאות",
+  feedbackStoredMany: "שינויים נלמדו לטובת יחידות הבאות",
+  feedbackNoneStored:
+    "השינויים נשמרו ביחידה. הם היו קטנים מכדי להילמד לטובת יחידות הבאות.",
+  feedbackPartlyFailed:
+    "השינויים נשמרו ביחידה, אך חלקם לא נרשמו במאגר ההעדפות.",
+
+  publishButton: "פרסום לתלמידים",
+  publishTitle: "פרסום היחידה",
+  publishIntro: "בחרו למי לפרסם את היחידה.",
+  publishSelectAll: "בחירת כולם",
+  publishClearAll: "ניקוי הבחירה",
+  publishSelectedCount: "נבחרו",
+  publishStudentsOf: "מתוך",
+  publishNoStudents: "לא נמצאו תלמידים בבית הספר הזה.",
+  publishNeedsSelection: "יש לבחור לפחות תלמיד אחד",
+  publishConfirm: "פרסמו",
+  publishCancel: "ביטול",
+  publishing: "מפרסם...",
+  publishSuccess: "היחידה פורסמה",
+  publishFailedTitle: "הפרסום נכשל",
+  publishUnsavedWarning:
+    "יש שינויים שלא נשמרו. פרסום עכשיו יפרסם את הגרסה השמורה בלבד.",
+  publishedNotice: "היחידה פורסמה. פרסום נוסף יחליף את רשימת התלמידים.",
+  publishedTo: "פורסמה לתלמידים",
+
+  // ---- Teacher dashboard (FR5, Q13) ----
+  dashTitle: "היחידות שלי",
+  dashIntro:
+    "כל היחידות שיצרתם, החדשות קודם. יחידה בטיוטה ממתינה לבדיקה ולפרסום.",
+  dashCreate: "יצירת יחידה חדשה",
+  dashLoading: "טוען את היחידות...",
+  dashErrorTitle: "לא הצלחנו לטעון את היחידות",
+  dashRetry: "נסו שוב",
+  dashEmptyTitle: "עדיין אין יחידות",
+  dashEmptyBody: "התחילו ביצירת יחידת העשרה ראשונה.",
+  dashEmptyFiltered: "אין יחידות שמתאימות לסינון הזה.",
+  dashFilterAll: "הכול",
+  dashFilterDraft: "טיוטות",
+  dashFilterPublished: "פורסמו",
+  dashCount: "יחידות",
+  dashOpen: "פתיחת היחידה",
+  dashLessons: "שיעורים",
+  dashExercises: "תרגילים",
+  dashCreatedAt: "נוצרה",
+  dashCreatedPending: "נשמרת כרגע",
+  dashAssignedTo: "פורסמה ל",
+  dashStudents: "תלמידים",
+  dashCriticApproved: "הביקורת אישרה",
+  dashCriticNotApproved: "הביקורת לא אישרה",
+  dashCriticUnknown: "אין דוח ביקורת",
+  dashLiveNote:
+    "הרשימה מתעדכנת מעצמה. יחידה שהיצירה שלה הסתיימה בשרת אחרי שהדפדפן הפסיק לחכות תופיע כאן בטיוטה.",
+} as const;

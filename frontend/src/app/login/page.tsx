@@ -35,42 +35,42 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm p-8">
-      <h1 className="mb-6 text-2xl font-bold">{strings.title}</h1>
+    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-8">
+      <h1 className="mb-6 font-display text-2xl font-bold text-brand">{strings.title}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1">
-          <span>{strings.emailLabel}</span>
+          <span className="text-sm font-medium text-ink-muted">{strings.emailLabel}</span>
           <input
             type="email"
             required
             dir="ltr"
-            className="rounded border p-2"
+            className="rounded-card border border-line bg-surface p-2.5"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             data-testid="login-email"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span>{strings.passwordLabel}</span>
+          <span className="text-sm font-medium text-ink-muted">{strings.passwordLabel}</span>
           <input
             type="password"
             required
             dir="ltr"
-            className="rounded border p-2"
+            className="rounded-card border border-line bg-surface p-2.5"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             data-testid="login-password"
           />
         </label>
         {error && (
-          <p role="alert" className="text-sm text-red-600" data-testid="login-error">
+          <p role="alert" className="text-sm font-medium text-danger" data-testid="login-error">
             {error}
           </p>
         )}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-blue-600 p-2 text-white disabled:opacity-50"
+          className="rounded-card bg-brand p-2.5 font-semibold text-brand-contrast transition-colors hover:bg-brand-strong disabled:opacity-50"
           data-testid="login-submit"
         >
           {submitting ? strings.submitting : strings.submit}

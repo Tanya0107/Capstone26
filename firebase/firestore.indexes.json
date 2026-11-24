@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "curriculumModules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "creatorTeacherKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "exercises",
       "queryScope": "COLLECTION",
       "fields": [

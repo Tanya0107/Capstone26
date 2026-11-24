@@ -1,0 +1,116 @@
+{
+  "label": "DEV demo evidence, not an evaluation result (R1)",
+  "checks": {
+    "lists_only_my_modules": {
+      "ok": true,
+      "detail": {
+        "shown": 6,
+        "expected": {
+          "total": 6,
+          "draft": 5,
+          "published": 1
+        }
+      }
+    },
+    "filter_counts_match_firestore": {
+      "ok": true,
+      "detail": {
+        "all": 6,
+        "draft": 5,
+        "published": 1,
+        "expected": {
+          "total": 6,
+          "draft": 5,
+          "published": 1
+        }
+      }
+    },
+    "card_links_to_review": {
+      "ok": true,
+      "detail": "/teacher/review/b8ZR1DiCyCb7HQcA2UDP"
+    },
+    "create_entry_present": {
+      "ok": true
+    },
+    "filter_narrows_the_list": {
+      "ok": true,
+      "detail": {
+        "got": {
+          "cards": 1,
+          "empty": false
+        },
+        "expected": 1
+      }
+    },
+    "orphan_module_appears_live": {
+      "ok": true,
+      "detail": {
+        "orphanKey": "VBixyrzKm4wfPkZV0IHr",
+        "waitedMs": 20000
+      }
+    },
+    "orphan_is_reachable": {
+      "ok": true,
+      "detail": {
+        "text": "טיוטהאין דוח ביקורתיחידה שנותרה ללא בעלים 1795334270294מקצוע:mathכיתה:5רמת קושי:31 שיעורים, 0 תרגיליםנוצרה 22 בנוב׳, 09:57",
+        "href": "/teacher/review/VBixyrzKm4wfPkZV0IHr"
+      }
+    },
+    "link_opens_the_review_screen": {
+      "ok": true,
+      "detail": {
+        "landed": true,
+        "title": "יחידה שנותרה ללא בעלים 1795334270294"
+      }
+    },
+    "no_horizontal_overflow_at_phone_width": {
+      "ok": true,
+      "detail": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowing": 0,
+        "dir": "rtl"
+      }
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "timestamp": "2026-11-22T07:57:50.835Z",
+  "expected": {
+    "total": 6,
+    "draft": 5,
+    "published": 1
+  },
+  "shown": {
+    "cards": 6,
+    "all": "הכול (6)",
+    "draft": "טיוטות (5)",
+    "published": "פורסמו (1)",
+    "firstLink": "/teacher/review/b8ZR1DiCyCb7HQcA2UDP",
+    "hasCreate": true
+  },
+  "publishedOnly": {
+    "cards": 1,
+    "empty": false
+  },
+  "orphanKey": "VBixyrzKm4wfPkZV0IHr",
+  "orphanCard": {
+    "text": "טיוטהאין דוח ביקורתיחידה שנותרה ללא בעלים 1795334270294מקצוע:mathכיתה:5רמת קושי:31 שיעורים, 0 תרגיליםנוצרה 22 בנוב׳, 09:57",
+    "href": "/teacher/review/VBixyrzKm4wfPkZV0IHr"
+  },
+  "navigated": {
+    "landed": true,
+    "title": "יחידה שנותרה ללא בעלים 1795334270294"
+  },
+  "phoneWidth": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowing": 0,
+    "dir": "rtl"
+  },
+  "orphanCleanedUp": true,
+  "ok": true,
+  "failures": []
+}
