@@ -39,6 +39,36 @@ in `tests/test_api/test_generation_endpoint.py`. Changes made while freezing:
   `ChatMessage`, analytics models; `assignedStudentKeys` on modules and
   exercises (D11).
 
+### Post-freeze contract changes
+
+- Step 3.3: `CurriculumPackage.summary` (optional string) added — the
+  Package Agent's short Hebrew teacher-guide summary. Mirrored in
+  `models.ts`, frozen spec re-exported.
+- Step 3.4: no schema change. `POST /api/feedback/edits` gained its real
+  implementation, so only the endpoint `description` text moved and the
+  spec was re-exported. The route now also rejects an edit whose
+  `teacherKey` is not the caller's uid with 403, matching the ownership
+  rule the security rules apply to every other teacher-written collection.
+
+- Step 3.6: `POST /api/generation` gained its real implementation and
+  `QualityScores` gained two fields, `referenceUnit` and
+  `referenceValidated` (D17). A similarity score without the reference it
+  was measured against cannot be displayed honestly, and the only gold
+  unit in the repo is still DRAFT, so the Review Dashboard must label such
+  a score a diagnostic rather than a metric (R1). `bertscoreF1` is now
+  documented as patched in after the response, and `bleu` as offline only.
+  Mirrored in `models.ts`, frozen spec re-exported.
+  New non-2xx responses on that route:
+  - 403 when `teacherKey` is not the caller's uid, matching the ownership
+    rule already applied to `POST /api/feedback/edits`. The module's
+    `creatorTeacherKey` is always taken from the verified token, never
+    from the body.
+  - 422 when the subject has no curated standards corpus or no entry in
+    the critic strategy map (D8). Both corpora are checked before any
+    model call, because the standards loader raises at stage 1 and the
+    critic strategy map at stage 5, which would waste minutes of
+    generation on a request that cannot succeed.
+
 ## Answer-protection design (R6, decided in Step 2.1, logged as D11)
 
 The book's Fig 4 stores `correctAnswer` and `socraticHints` on the exercise

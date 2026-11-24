@@ -12,7 +12,7 @@
                     "generation"
                 ],
                 "summary": "Generate Curriculum",
-                "description": "Run the 6-stage pipeline via the Orchestrator and persist the draft.\n\nTODO Phase 3, Step 3.6:\n  1. context = await memory_bank.retrieve_context(request)   # RAG (FR6)\n  2. package = await orchestrator.run_pipeline(request, context)\n  3. module_key = save_curriculum_package(package)           # draft status\n  4. return package (with module_key + latency populated)",
+                "description": "Run the 6 stage pipeline via the Orchestrator and persist the draft.\n\nA teacher may only generate under their own key, so the module's\ncreatorTeacherKey always matches the caller the security rules will\ncheck on every later read.",
                 "operationId": "generate_curriculum_api_generation_post",
                 "parameters": [
                     {
@@ -65,7 +65,7 @@
                     "tutor"
                 ],
                 "summary": "Tutor Turn",
-                "description": "Non-streaming variant (used by tests).\n\nTODO Phase 3, Step 3.5: delegate to tutoring.socratic_agent.run_turn().\nHard rule: the response NEVER contains the exercise's correct answer.",
+                "description": "Non streaming variant (used by tests).\n\nHard rule: the response NEVER contains the exercise's correct answer.",
                 "operationId": "tutor_turn_api_tutor_turn_post",
                 "parameters": [
                     {
@@ -118,7 +118,7 @@
                     "tutor"
                 ],
                 "summary": "Tutor Turn Stream",
-                "description": "SSE token stream of the same turn (NFR8).",
+                "description": "SSE reveal of the same turn (NFR8).",
                 "operationId": "tutor_turn_stream_api_tutor_turn_stream_post",
                 "parameters": [
                     {
@@ -169,7 +169,7 @@
                     "feedback"
                 ],
                 "summary": "Ingest Edits",
-                "description": "TODO Phase 3, Step 3.4: distance = await memory_bank.ingest_teacher_edit(record)\nReturn FeedbackIngestResponse(semantic_distance=distance, stored=bool).",
+                "description": "Score the edit and store it when it is substantive (FR6).\n\nA teacher may only file edits under their own key, otherwise one\nteacher's style preferences would be attributed to another.",
                 "operationId": "ingest_edits_api_feedback_edits_post",
                 "parameters": [
                     {
@@ -222,7 +222,7 @@
                     "analytics"
                 ],
                 "summary": "Assignment Analytics",
-                "description": "Aggregate ATT / TCV / HSR / NGS per student for one assignment.\n\nTODO Phase 5, Step 5.2: read telemetryEvents + studentProgress, compute via\ncore.telemetry, return chart-ready JSON. Consider caching (60s) \u2014 dashboards\npoll; raw events can be large.",
+                "description": "Aggregate ATT / TCV / HSR / NGS per student for one assignment.\n\nTODO Phase 5, Step 5.2: read telemetryEvents + studentProgress, compute via\ncore.telemetry, return chart-ready JSON. Consider caching (60s) — dashboards\npoll; raw events can be large.",
                 "operationId": "assignment_analytics_api_analytics_assignment__assignment_key__get",
                 "parameters": [
                     {
@@ -448,6 +448,18 @@
                     "title": {
                         "type": "string",
                         "title": "Title"
+                    },
+                    "summary": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Summary",
+                        "description": "Short teacher guide summary in Hebrew (Package Agent)"
                     },
                     "subject": {
                         "type": "string",
@@ -710,7 +722,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Bertscoref1"
+                        "title": "Bertscoref1",
+                        "description": "Patched in after the response by the background scorer (D17)"
                     },
                     "rougeL": {
                         "anyOf": [
@@ -721,7 +734,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Rougel"
+                        "title": "Rougel",
+                        "description": "Inline ROUGE-L vs the nearest gold reference, Hebrew tokenizer"
                     },
                     "bleu": {
                         "anyOf": [
@@ -732,12 +746,37 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Bleu"
+                        "title": "Bleu",
+                        "description": "Offline harness only, not computed per request (D17)"
+                    },
+                    "referenceUnit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Referenceunit",
+                        "description": "Gold reference unit the similarity was measured against"
+                    },
+                    "referenceValidated": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Referencevalidated",
+                        "description": "False when that reference is still DRAFT, so scores are diagnostics only"
                     }
                 },
                 "type": "object",
                 "title": "QualityScores",
-                "description": "FR4 automated algorithmic scoring attached to every draft.\n\nNOTE: these are per draft diagnostics. The Phase B thresholds\n(BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are\nTARGETS, not results."
+                "description": "FR4 automated algorithmic scoring attached to every draft.\n\nNOTE: these are per draft diagnostics. The Phase B thresholds\n(BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are\nTARGETS, not results.\n\nA similarity score is meaningless without its reference, so the unit\nit was measured against travels with it, together with whether that\nunit is teacher validated. An unvalidated reference may back this\ndiagnostic but never a reported metric (R1), and the Review Dashboard\ncopy must say so."
             },
             "SocraticHint": {
                 "properties": {

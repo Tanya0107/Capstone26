@@ -1,8 +1,67 @@
 {
   "corpus": "il_moe",
   "subject": "history",
-  "version": "0.1.0",
+  "version": "0.2.0-draft",
   "language": "he",
-  "source_note": "Open ended subject sample for D9 stratified evaluation. Curate from official MOE curriculum documents.",
-  "standards": []
+  "draft_pending_validation": true,
+  "source_note": "Open ended subject sample for D9. Entries drafted by the coding agent from the middle school history curriculum (MOE). The team must validate every entry against the source document before merge (BUILD_GUIDE Step 3.3 pre-task).",
+  "standards": [
+    {
+      "id": "IL-MOE-HIST-G6-ANC-01",
+      "grade": "6",
+      "domain": "ancient_civilizations",
+      "text_he": "הכרת מאפייני התרבויות הקדומות במסופוטמיה ובמצרים, כתב, חוק ושלטון, והשוואה בין אורחות חייהן",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק ראשית הציוויליזציה, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-HIST-G6-ANC-02",
+      "grade": "6",
+      "domain": "ancient_civilizations",
+      "text_he": "הכרת עולם הפוליס היווני, צמיחת הדמוקרטיה באתונה, ותרומת התרבות היוונית לעולם המערבי",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק יוון הקלאסית, כיתה ו"
+    },
+    {
+      "id": "IL-MOE-HIST-G6-SKL-01",
+      "grade": "6",
+      "domain": "historical_thinking",
+      "text_he": "הבחנה בין מקור ראשוני למקור משני, ניתוח ביקורתי של מקורות היסטוריים, וזיהוי נקודות מבט שונות",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק מיומנויות חשיבה היסטורית",
+    "grade_note": "מיומנות רוחבית לכל שכבות הגיל"
+    },
+    {
+      "id": "IL-MOE-HIST-G7-ROM-01",
+      "grade": "7",
+      "domain": "rome_and_second_temple",
+      "text_he": "הכרת האימפריה הרומית ומוסדותיה, והבנת מעמדה של יהודה תחת השלטון הרומי בימי הבית השני",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק רומא וירושלים, כיתה ז"
+    },
+    {
+      "id": "IL-MOE-HIST-G7-ROM-02",
+      "grade": "7",
+      "domain": "rome_and_second_temple",
+      "text_he": "הבנת הגורמים למרד הגדול ולחורבן בית המקדש השני, והשלכותיהם על תולדות עם ישראל",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק חורבן ומרד, כיתה ז"
+    },
+    {
+      "id": "IL-MOE-HIST-G7-MED-01",
+      "grade": "7",
+      "domain": "middle_ages",
+      "text_he": "הכרת מאפייני החברה הפאודלית באירופה בימי הביניים, ומעמדן של הקהילות היהודיות בין נצרות לאסלאם",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק ימי הביניים, כיתה ז"
+    },
+    {
+      "id": "IL-MOE-HIST-G8-MOD-01",
+      "grade": "8",
+      "domain": "early_modern",
+      "text_he": "הבנת התמורות בעת החדשה המוקדמת, גילויים גאוגרפיים, הדפוס והרפורמציה, והשפעתן על העולם",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק העת החדשה המוקדמת, כיתה ח"
+    },
+    {
+      "id": "IL-MOE-HIST-G8-MOD-02",
+      "grade": "8",
+      "domain": "revolutions",
+      "text_he": "הכרת רעיונות תנועת ההשכלה והמהפכה הצרפתית, והבנת השפעתם על צמיחת הלאומיות באירופה",
+      "source": "תכנית הלימודים בהיסטוריה לחטיבת הביניים, פרק מהפכות ולאומיות, כיתה ח"
+    }
+  ]
 }

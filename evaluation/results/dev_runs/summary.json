@@ -1,0 +1,51 @@
+{
+  "label": "DEV runs, not evaluation results (R1)",
+  "runs": [
+    {
+      "brief": "math_fractions_g5",
+      "status": "ok",
+      "wall_seconds": 311.86,
+      "critic_approved": true,
+      "regeneration_cycles_used": 1,
+      "critic_issue_count": 0,
+      "stage_totals": {
+        "intake": 28.42,
+        "scope_sequence": 18.36,
+        "lesson_design": 163.34,
+        "assessment_design": 76.71,
+        "critic": 17.31,
+        "package": 7.7
+      }
+    },
+    {
+      "brief": "science_ecosystems_g5",
+      "wall_seconds": 252.78,
+      "critic_approved": true,
+      "regeneration_cycles_used": 0,
+      "critic_issue_count": 0
+    },
+    {
+      "brief": "history_ancient_g6",
+      "wall_seconds": 305.55,
+      "critic_approved": true,
+      "regeneration_cycles_used": 0,
+      "critic_issue_count": 1
+    },
+    {
+      "brief": "math_hard_percent_g6",
+      "status": "ok",
+      "wall_seconds": 533.4,
+      "critic_approved": false,
+      "regeneration_cycles_used": 2,
+      "critic_issue_count": 2,
+      "stage_totals": {
+        "intake": 27.55,
+        "scope_sequence": 21.74,
+        "lesson_design": 301.58,
+        "assessment_design": 139.66,
+        "critic": 35.85,
+        "package": 7.0
+      }
+    }
+  ]
+}

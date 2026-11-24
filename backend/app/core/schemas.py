@@ -128,16 +128,35 @@ class QualityScores(ApiModel):
     NOTE: these are per draft diagnostics. The Phase B thresholds
     (BERTScore>=0.80 etc.) are evaluated offline in /evaluation and are
     TARGETS, not results.
+
+    A similarity score is meaningless without its reference, so the unit
+    it was measured against travels with it, together with whether that
+    unit is teacher validated. An unvalidated reference may back this
+    diagnostic but never a reported metric (R1), and the Review Dashboard
+    copy must say so.
     """
-    bertscore_f1: Optional[float] = None
-    rouge_l: Optional[float] = None
-    bleu: Optional[float] = None
+    bertscore_f1: Optional[float] = Field(
+        default=None, description="Patched in after the response by the background scorer (D17)"
+    )
+    rouge_l: Optional[float] = Field(
+        default=None, description="Inline ROUGE-L vs the nearest gold reference, Hebrew tokenizer"
+    )
+    bleu: Optional[float] = Field(
+        default=None, description="Offline harness only, not computed per request (D17)"
+    )
+    reference_unit: Optional[str] = Field(
+        default=None, description="Gold reference unit the similarity was measured against"
+    )
+    reference_validated: Optional[bool] = Field(
+        default=None, description="False when that reference is still DRAFT, so scores are diagnostics only"
+    )
 
 
 class CurriculumPackage(ApiModel):
     """Structured JSON teacher guide returned by the pipeline (Curriculum Package Agent)."""
     module_key: Optional[str] = None
     title: str
+    summary: Optional[str] = Field(default=None, description="Short teacher guide summary in Hebrew (Package Agent)")
     subject: str
     grade_level: str
     difficulty_level: int
