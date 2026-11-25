@@ -44,6 +44,7 @@ import {
   writeAnswerDraft,
 } from "@/lib/student/answerBuffer";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useTelemetry } from "@/lib/hooks/useTelemetry";
 import type { Assignment, StoredCurriculumModule, StoredExercise, StudentProgress } from "@/types/models";
 
 type LoadError = "not_found" | "forbidden" | "unknown";
@@ -84,6 +85,13 @@ export default function WorkspacePage({ params }: { params: { assignmentId: stri
   const total = exercises?.length ?? 0;
   const exercise = exercises && exercises.length > 0 ? exercises[Math.min(viewIndex, total - 1)] : null;
   const exerciseKey = exercise?.exerciseId ?? "";
+
+  // ---- Telemetry (Step 4.5, NFR5) ----
+  // Accrues active time on the open exercise and stops when it changes. The
+  // returned recordHelp is for the tutor send handler in Step 4.6 and is
+  // deliberately not called here: a scaffold reveal is not an Ask the tutor
+  // click, and hsrcCount has no event type to tell the two apart (D22).
+  useTelemetry(assignmentKey, exerciseKey);
 
   // ---- Listeners (NFR3) ----
   useEffect(() => {

@@ -232,6 +232,30 @@ describe("telemetryEvents append only log", () => {
     await assertFails(updateDoc(doc(asTeacher(), "telemetryEvents/ev1"), { attSeconds: 999 }));
     await assertFails(deleteDoc(doc(asTeacher(), "telemetryEvents/ev1")));
   });
+
+  // Step 4.5 relies on all three of the following.
+  it("a teacher reads the log, a student cannot read it back", async () => {
+    await assertSucceeds(getDoc(doc(asTeacher(), "telemetryEvents/ev1")));
+    // The owning student is refused too, which is why the client cannot
+    // deduplicate by reading first and has to make its writes idempotent.
+    await assertFails(getDoc(doc(asStudent(), "telemetryEvents/ev1")));
+  });
+
+  it("a replayed write onto an existing event id is refused", async () => {
+    // A buffered beat replayed after a reconnect lands on its own id. If that
+    // id is already there the write is an update, which the append only rule
+    // refuses, so a replay can never double count. The payload here is valid
+    // and owned by the caller, so the refusal is the id collision alone.
+    await assertFails(
+      setDoc(doc(asStudent(), "telemetryEvents/ev1"), {
+        studentKey: "s1",
+        exerciseKey: "e1",
+        assignmentKey: "a1",
+        attSeconds: 15,
+        hsrcCount: 0,
+      })
+    );
+  });
 });
 
 describe("curriculumModules ownership", () => {
