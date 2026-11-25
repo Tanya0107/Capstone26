@@ -1,0 +1,286 @@
+{
+  "label": "DEV demo evidence, not an evaluation result (R1)",
+  "harness": {
+    "server": "next dev 14.2.35",
+    "navTimeoutMs": 240000,
+    "note": "Timeouts are generous because the rig is slow. They measure the rig, not the product."
+  },
+  "fixture": {
+    "title": "חלוקה הוגנת של פיצה mwvue7xj",
+    "exercises": 3,
+    "moduleKey": "h92h3zRsLJk7EVIPy4Ez",
+    "exerciseKeys": [
+      "Yl5MWdVzqlpBEGzmNiTi",
+      "WaEq26tcjv05J1OnxdKL",
+      "akqzTP6gqZKsqhRYjJg4"
+    ]
+  },
+  "checks": {
+    "student_dashboard_loads_without_error": {
+      "ok": true,
+      "detail": {
+        "cards": 0,
+        "empty": true,
+        "error": null
+      }
+    },
+    "teacher_opens_the_fixture_for_review": {
+      "ok": true,
+      "detail": "חלוקה הוגנת של פיצה mwvue7xj"
+    },
+    "teacher_selects_the_student": {
+      "ok": true,
+      "detail": {
+        "selected": true
+      }
+    },
+    "publish_reports_no_failure": {
+      "ok": true,
+      "detail": null
+    },
+    "publish_created_one_assignment": {
+      "ok": true,
+      "detail": {
+        "found": 1
+      }
+    },
+    "student_session_survives_the_teacher_sign_in": {
+      "ok": true,
+      "detail": {
+        "path": "/student/dashboard",
+        "dashboardMounted": true
+      }
+    },
+    "assignment_appears_live_without_reload": {
+      "ok": true,
+      "detail": {
+        "assignmentKey": "LQQ8nstnNfOr7hFXV9Xj",
+        "waitedMs": 30000,
+        "cardsBefore": 0
+      }
+    },
+    "card_shows_the_unit_and_opens_the_workspace": {
+      "ok": true,
+      "detail": {
+        "text": "חלוקה הוגנת של פיצה mwvue7xjחדשהיחידה קצרה בכתיבת יד לבדיקת מסך התלמיד. אין בה תוכן שנוצר במודל.כיתה5מתמטיקה2 שיעוריםתרגילים3התקדמות0 מתוך 3התחילו",
+        "href": "/student/workspace/LQQ8nstnNfOr7hFXV9Xj",
+        "progress": "0 מתוך 3"
+      }
+    },
+    "workspace_opens_rather_than_refusing": {
+      "ok": true,
+      "detail": "workspace"
+    },
+    "workspace_opens_on_the_first_exercise_in_order": {
+      "ok": true,
+      "detail": {
+        "title": "חלוקה הוגנת של פיצה mwvue7xj",
+        "prompt": "פיצה חולקה ל-8 משולשים שווים. דנה אכלה 3 משולשים ויואב אכל 2. איזה חלק מהפיצה נשאר?",
+        "position": "תרגיל 1 מתוך 3",
+        "steps": 0,
+        "stepTotal": 3,
+        "stepper": 3,
+        "nextDisabled": true,
+        "nextLocked": true
+      }
+    },
+    "scaffold_steps_start_hidden": {
+      "ok": true,
+      "detail": {
+        "rendered": 0,
+        "available": 3
+      }
+    },
+    "next_is_locked_before_an_answer_is_sent": {
+      "ok": true,
+      "detail": {
+        "disabled": true,
+        "noticeShown": true
+      }
+    },
+    "scaffold_reveals_one_step_at_a_time": {
+      "ok": true,
+      "detail": {
+        "afterOne": 1,
+        "afterTwo": 2
+      }
+    },
+    "no_answer_text_in_the_student_dom": {
+      "ok": true,
+      "detail": {
+        "canary": "LEAK-CANARY-mwvue7xj"
+      }
+    },
+    "no_answer_text_on_the_wire_to_the_student": {
+      "ok": true,
+      "detail": {
+        "bodiesInspected": 25
+      }
+    },
+    "submitting_advances_progress_in_firestore": {
+      "ok": true,
+      "detail": {
+        "order": 1,
+        "startedAt": "2026-11-25T08:09:13.577Z"
+      }
+    },
+    "submitting_moves_to_the_next_exercise": {
+      "ok": true,
+      "detail": {
+        "shown": "שתי פיצות זהות חולקו, הראשונה ל-4 חלקים והשנייה ל-6 חלקים. מ"
+      }
+    },
+    "answer_is_on_disk_while_offline": {
+      "ok": true,
+      "detail": {
+        "draftsFound": 1,
+        "online": false
+      }
+    },
+    "unsent_submission_is_queued_durably": {
+      "ok": true,
+      "detail": {
+        "queued": [
+          {
+            "assignmentKey": "LQQ8nstnNfOr7hFXV9Xj",
+            "studentKey": "s01",
+            "currentExerciseOrder": 2,
+            "isCompleted": false,
+            "queuedAt": 1795594156735
+          }
+        ],
+        "banner": "שליחה אחת ממתינה לחיבור"
+      }
+    },
+    "queued_submission_reaches_firestore_when_the_connection_returns": {
+      "ok": true,
+      "detail": {
+        "drained": true,
+        "order": 2
+      }
+    },
+    "offline_answer_survives_the_reload": {
+      "ok": true,
+      "detail": {
+        "answer": "תשובה שנכתבה בלי חיבור mwvue7xj",
+        "prompt": "שתי פיצות זהות חולקו, הראשונה ל-4 חלקים והשנייה ל-6 חלקים. מי שלקח חלק אחד מהראשונה קיבל יותר או פחות ממי שלקח חלק אחד מהשנייה?",
+        "state": "submitted"
+      }
+    },
+    "finishing_the_last_exercise_completes_the_assignment": {
+      "ok": true,
+      "detail": {
+        "order": 3,
+        "isCompleted": true,
+        "completedAt": "2026-11-25T08:09:21.866Z",
+        "completionShown": true,
+        "summary": {
+          "submitted": "3",
+          "gainsNote": true
+        }
+      }
+    },
+    "progress_screen_states_where_a_gain_figure_comes_from": {
+      "ok": true,
+      "detail": {
+        "submitted": "3",
+        "gainsNote": true
+      }
+    },
+    "no_horizontal_overflow_at_phone_width": {
+      "ok": true,
+      "detail": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflowing": 0,
+        "dir": "rtl"
+      }
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": {
+        "unexpected": [],
+        "offlineInduced": 14
+      }
+    }
+  },
+  "timestamp": "2026-11-25T08:09:08.737Z",
+  "before": {
+    "cards": 0,
+    "empty": true,
+    "error": null
+  },
+  "assignmentKey": "LQQ8nstnNfOr7hFXV9Xj",
+  "studentSessionDuringPublish": {
+    "path": "/student/dashboard",
+    "dashboardMounted": true
+  },
+  "card": {
+    "text": "חלוקה הוגנת של פיצה mwvue7xjחדשהיחידה קצרה בכתיבת יד לבדיקת מסך התלמיד. אין בה תוכן שנוצר במודל.כיתה5מתמטיקה2 שיעוריםתרגילים3התקדמות0 מתוך 3התחילו",
+    "href": "/student/workspace/LQQ8nstnNfOr7hFXV9Xj",
+    "progress": "0 מתוך 3"
+  },
+  "workspaceState": "workspace",
+  "firstExercise": {
+    "title": "חלוקה הוגנת של פיצה mwvue7xj",
+    "prompt": "פיצה חולקה ל-8 משולשים שווים. דנה אכלה 3 משולשים ויואב אכל 2. איזה חלק מהפיצה נשאר?",
+    "position": "תרגיל 1 מתוך 3",
+    "steps": 0,
+    "stepTotal": 3,
+    "stepper": 3,
+    "nextDisabled": true,
+    "nextLocked": true
+  },
+  "scaffold": {
+    "afterOne": 1,
+    "afterTwo": 2
+  },
+  "leakGuard": {
+    "domHasCanary": false,
+    "wireHits": 0,
+    "bodiesInspected": 25
+  },
+  "progressAfterOne": {
+    "order": 1,
+    "startedAt": "2026-11-25T08:09:13.577Z"
+  },
+  "offline": {
+    "draftOnDisk": 1,
+    "queue": "[{\"assignmentKey\":\"LQQ8nstnNfOr7hFXV9Xj\",\"studentKey\":\"s01\",\"currentExerciseOrder\":2,\"isCompleted\":false,\"queuedAt\":1795594156735}]",
+    "banner": "שליחה אחת ממתינה לחיבור",
+    "online": false
+  },
+  "progressAfterTwo": 2,
+  "afterReload": {
+    "answer": "תשובה שנכתבה בלי חיבור mwvue7xj",
+    "prompt": "שתי פיצות זהות חולקו, הראשונה ל-4 חלקים והשנייה ל-6 חלקים. מי שלקח חלק אחד מהראשונה קיבל יותר או פחות ממי שלקח חלק אחד מהשנייה?",
+    "state": "submitted"
+  },
+  "final": {
+    "order": 3,
+    "isCompleted": true,
+    "completedAt": "2026-11-25T08:09:21.866Z",
+    "completionShown": true,
+    "summary": {
+      "submitted": "3",
+      "gainsNote": true
+    }
+  },
+  "phoneWidth": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflowing": 0,
+    "dir": "rtl"
+  },
+  "offlineNoise": {
+    "count": 14,
+    "sample": [
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ]
+  },
+  "cleanedUp": 9,
+  "consoleErrors": [],
+  "ok": true,
+  "failures": []
+}

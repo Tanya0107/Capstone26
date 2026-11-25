@@ -6,6 +6,7 @@
  *   student cannot read exerciseSolutions or feedbackMemoryBank
  *   student can read only assignments containing their uid in assignedTo
  *   student can create telemetryEvents only with studentKey == auth.uid
+ *   student can write only own studentProgress, and nobody can delete it
  *   student cannot update or delete any telemetryEvents
  *   teacher can create and update own curriculumModules, not another teacher's
  *   unauthenticated requests are denied everywhere
@@ -98,6 +99,18 @@ beforeEach(async () => {
       teacherKey: "t1",
       assignedTo: ["s2"],
       status: "active",
+    });
+    await setDoc(doc(db, "studentProgress/a1__s1"), {
+      assignmentKey: "a1",
+      studentKey: "s1",
+      currentExerciseOrder: 0,
+      isCompleted: false,
+    });
+    await setDoc(doc(db, "studentProgress/a2__s2"), {
+      assignmentKey: "a2",
+      studentKey: "s2",
+      currentExerciseOrder: 1,
+      isCompleted: false,
     });
     await setDoc(doc(db, "telemetryEvents/ev1"), {
       studentKey: "s1",
@@ -261,6 +274,94 @@ describe("curriculumModules ownership", () => {
   });
 });
 
+describe("studentProgress ownership (Step 4.4)", () => {
+  // The first student write the product makes. The doc id is
+  // assignmentKey__studentKey so a student has exactly one progress doc per
+  // assignment, which is what makes the write an idempotent upsert rather
+  // than a query followed by a create.
+  it("student creates own progress with the deterministic id", async () => {
+    await assertSucceeds(
+      setDoc(doc(asStudent(), "studentProgress/a1__s1_new"), {
+        assignmentKey: "a1",
+        studentKey: "s1",
+        currentExerciseOrder: 0,
+        isCompleted: false,
+      })
+    );
+  });
+
+  it("student cannot create progress for another student", async () => {
+    await assertFails(
+      setDoc(doc(asStudent(), "studentProgress/a2__s2_new"), {
+        assignmentKey: "a2",
+        studentKey: "s2",
+        currentExerciseOrder: 0,
+        isCompleted: false,
+      })
+    );
+  });
+
+  it("student advances own progress", async () => {
+    await assertSucceeds(
+      updateDoc(doc(asStudent(), "studentProgress/a1__s1"), { currentExerciseOrder: 2 })
+    );
+  });
+
+  it("student cannot advance another student's progress", async () => {
+    await assertFails(
+      updateDoc(doc(asStudent(), "studentProgress/a2__s2"), { currentExerciseOrder: 2 })
+    );
+  });
+
+  it("student cannot rewrite a progress doc onto another studentKey", async () => {
+    await assertFails(
+      updateDoc(doc(asStudent(), "studentProgress/a1__s1"), { studentKey: "s2" })
+    );
+  });
+
+  it("student reads own progress and not another student's", async () => {
+    await assertSucceeds(getDoc(doc(asStudent(), "studentProgress/a1__s1")));
+    await assertFails(getDoc(doc(asStudent(), "studentProgress/a2__s2")));
+  });
+
+  it("student can query only with the own studentKey filter", async () => {
+    const ok = query(
+      collection(asStudent(), "studentProgress"),
+      where("studentKey", "==", "s1")
+    );
+    await assertSucceeds(getDocs(ok));
+    await assertFails(getDocs(collection(asStudent(), "studentProgress")));
+  });
+
+  // The reason lib/firebase/firestore.listenToProgress uses a query and not a
+  // get. The rule reads resource.data.studentKey, and resource is null for a
+  // document that does not exist, so the get is refused with a null value
+  // error instead of answered with "no such document". A student's first
+  // visit to a workspace is that case.
+  it("a get of a missing progress document is refused, a query is not", async () => {
+    await assertFails(getDoc(doc(asStudent(), "studentProgress/no_such_assignment__s1")));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(asStudent(), "studentProgress"),
+          where("studentKey", "==", "s1"),
+          where("assignmentKey", "==", "no_such_assignment"),
+        )
+      )
+    );
+  });
+
+  it("teacher reads student progress, which FR8 analytics needs", async () => {
+    await assertSucceeds(getDoc(doc(asTeacher(), "studentProgress/a1__s1")));
+    await assertSucceeds(getDocs(collection(asTeacher(), "studentProgress")));
+  });
+
+  it("nobody deletes progress", async () => {
+    await assertFails(deleteDoc(doc(asStudent(), "studentProgress/a1__s1")));
+    await assertFails(deleteDoc(doc(asTeacher(), "studentProgress/a1__s1")));
+  });
+});
+
 describe("unauthenticated access", () => {
   it("denied on every collection", async () => {
     await assertFails(getDoc(doc(asAnon(), "users/t1")));
@@ -269,6 +370,7 @@ describe("unauthenticated access", () => {
     await assertFails(getDoc(doc(asAnon(), "exercises/e1")));
     await assertFails(getDoc(doc(asAnon(), "exerciseSolutions/e1")));
     await assertFails(getDoc(doc(asAnon(), "assignments/a1")));
+    await assertFails(getDoc(doc(asAnon(), "studentProgress/a1__s1")));
     await assertFails(getDoc(doc(asAnon(), "telemetryEvents/ev1")));
     await assertFails(
       setDoc(doc(asAnon(), "telemetryEvents/anon1"), { studentKey: "s1", attSeconds: 1 })
