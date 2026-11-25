@@ -891,3 +891,84 @@ not run in this step, so `next lint` is still owed on a machine that can
 finish it, and CI on Linux is the real gate. `tsc --noEmit` passes at exit
 0, and the compile step of `next build` passes, so the code is typechecked
 and it builds.
+
+## Step 4.5 evidence, telemetry capture (2026-11-25)
+
+The step says to implement `lib/firebase/telemetry.ts` and `useTelemetry`
+exactly per the file's design block, and to show a scripted three minute
+session producing plausible events with an idle stretch visibly excluded
+from ATT accrual.
+
+The design block fixes the behaviour but not the document shape, and the
+shape is where the step could quietly go wrong. Two readings were available.
+A beat could carry a running total of active seconds for the exercise, which
+makes deduplication trivial because a reader takes the maximum. Or a beat
+could carry the active seconds of its own interval, which makes a reader sum
+them. The decision was not taken on taste. `backend/app/core/telemetry.py`
+says in a comment that heartbeats farther apart than `IDLE_CUTOFF_SECONDS`
+count as idle, which the server can only judge if it is given the individual
+beats, and `compute_hsr` is documented as summing `hsrcCount`, which a
+running counter would multiply by the number of beats that follow each
+click. Both existing definitions require per interval values, so that is
+what the client writes, recorded as D22.
+
+The second decision with consequences is the timestamp. A `serverTimestamp`
+is stamped when the write arrives, so any beat held in the offline buffer
+would arrive stamped with the reconnect and every idle gap would collapse to
+zero, turning idle time into active time in the one place that is supposed
+to exclude it. The beat therefore carries the client clock. The cost is
+stated rather than hidden: a student could forge their own figures, which is
+acceptable only because these numbers support ATT, TCV and HSR and are never
+a grade.
+
+Three properties were measured rather than assumed, because the code depends
+on them. A teacher can read the log. The owning student cannot read their
+own events, so the client cannot deduplicate by looking first. And a write
+onto an id already in the log is refused, since the collection is append
+only, which is what makes a replayed beat a refusal instead of a double
+count. The rules suite went from 32 tests to 34 to pin the first two, and
+the browser demo re-measures the third through the REST API with a real
+student token rather than the owner credential.
+
+The run is in `evaluation/results/dev_runs/telemetry_session.json`, 16
+checks and 0 failures. A 251 second session accrued 135 seconds of active
+time and excluded 116. The beat timestamps sit 15, 15, 15, 105, 15, 15, 15
+and 15 seconds apart, so the 95 second idle stretch is absent from the
+accrual and simultaneously visible to the server side cutoff as a 105 second
+gap, which is both halves of what the design block asks for. Every event
+carried exactly the seven contract fields, and the log was searched for the
+student's email, their display name and the exercise prompt with no hit
+(NFR5). Two beats written with the connection cut waited in `localStorage`
+rather than in memory, nothing reached Firestore while offline, and both
+landed after the reconnect, leaving the queue empty (NFR7).
+
+The first run failed one check and the failure was mine, not the product's.
+`an_idle_stretch_accrues_nothing` compared the beat count at the instant
+typing stopped against the count 95 seconds later, and found one more. That
+beat was correct: a keystroke buys the interval it falls in, and the tick
+that credits it can land up to 15 seconds after the typing stopped, which is
+inside the window the check called idle. The claim worth measuring is that
+sustained idle accrues nothing, so the check now allows one beat interval of
+grace and then requires the remaining 75 seconds to be silent, which it is.
+The original reading is kept here because the distinction between a boundary
+artefact and a defect is exactly what a reader of this log needs.
+
+Interactions are dispatched as DOM `keydown` events on `window` rather than
+typed. CDP key input is not delivered to an authenticated page in this rig,
+which is D19, measured in Step 4.2 and amended in Step 4.3. The listener
+does not inspect `isTrusted`, so from the listener inwards the path is
+identical, and the residual is the one D19 already records: nobody has yet
+typed on a real keyboard on one of these pages.
+
+A scaffold reveal deliberately does not count as a help request. It would be
+defensible in the help seeking literature, but the frozen contract has one
+`hsrcCount` and no event type, so tutor help and hint reveals would land in
+the same number with no way to separate them again. Step 4.6 verifies the
+increment on the Ask the tutor control, where the guide places it.
+
+The lint debt recorded at the end of Step 4.4 is closed. CI run 45591504037
+on `main` failed on Lint with one error, a local variable named `module` in
+the student dashboard that `@next/next/no-assign-module-variable` forbids
+because it shadows the CommonJS `module` object. Fixed by renaming it. In
+this step `next lint` and `tsc --noEmit` both ran here at exit 0, so ESLint
+has now seen the Step 4.4 code as well as this step's.

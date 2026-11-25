@@ -1,0 +1,224 @@
+{
+  "label": "DEV demo evidence, not an evaluation result (R1)",
+  "harness": {
+    "server": "next dev 14.2.35",
+    "navTimeoutMs": 240000,
+    "interactions": "DOM keydown dispatched on window. CDP key input is not delivered on an authenticated page in this rig (D19).",
+    "timerArgs": "Background timer throttling disabled, so a 15s interval in a headless page is not slowed by the browser."
+  },
+  "phases": {
+    "quietMs": 20000,
+    "activeOneMs": 50000,
+    "idleMs": 95000,
+    "activeTwoMs": 45000,
+    "offlineMs": 35000
+  },
+  "deferred": "hsrcCount is wired through recordHelpRequest and useTelemetry().recordHelp but no click drives it yet, because the Ask the tutor control is Step 4.6, where the guide places the HSR verification.",
+  "checks": {
+    "workspace_opens_for_the_fixture": {
+      "ok": true,
+      "detail": {
+        "assignmentKey": "0TbitEF4opCA8Yt3oSR1"
+      }
+    },
+    "page_is_visible_so_beats_are_possible": {
+      "ok": true,
+      "detail": {
+        "visibility": "visible"
+      }
+    },
+    "an_untouched_workspace_accrues_nothing": {
+      "ok": true,
+      "detail": {
+        "queued": 0,
+        "written": 0,
+        "forMs": 20000
+      }
+    },
+    "interaction_accrues_beats_at_the_designed_interval": {
+      "ok": true,
+      "detail": {
+        "beats": 3,
+        "queued": 3,
+        "written": 0,
+        "expected": "2 to 4 over 50s at one per 15s"
+      }
+    },
+    "a_sustained_idle_stretch_accrues_nothing": {
+      "ok": true,
+      "detail": {
+        "beatsBefore": 4,
+        "beatsAfter": 4,
+        "silentSeconds": 75,
+        "graceSeconds": 20,
+        "note": "The grace window is one beat interval plus slack, for the beat the last keystroke had already earned."
+      }
+    },
+    "beats_written_offline_wait_in_storage": {
+      "ok": true,
+      "detail": {
+        "queuedWhileOffline": 2,
+        "writtenDuringOffline": 0,
+        "queueNow": 5,
+        "ids": [
+          "s01__mww39iszk4y7rq__5",
+          "s01__mww39iszk4y7rq__6",
+          "s01__mww39iszk4y7rq__7",
+          "s01__mww39iszk4y7rq__8",
+          "s01__mww39iszk4y7rq__9"
+        ]
+      }
+    },
+    "queued_beats_land_when_the_connection_returns": {
+      "ok": true,
+      "detail": {
+        "queued": 5,
+        "landed": 5
+      }
+    },
+    "the_queue_empties_once_everything_is_acknowledged": {
+      "ok": true,
+      "detail": {
+        "left": 0
+      }
+    },
+    "accrued_time_is_well_under_the_wall_clock": {
+      "ok": true,
+      "detail": {
+        "attSecondsTotal": 135,
+        "wallClockSeconds": 251,
+        "excludedSeconds": 116,
+        "ratio": 0.538
+      }
+    },
+    "every_beat_is_one_interval_of_active_time": {
+      "ok": true,
+      "detail": {
+        "distinctAttSeconds": [
+          15
+        ],
+        "expected": 15
+      }
+    },
+    "the_idle_stretch_leaves_a_gap_the_server_cutoff_can_see": {
+      "ok": true,
+      "detail": {
+        "widest": 105,
+        "cutoff": 90
+      }
+    },
+    "every_event_names_this_student_and_this_exercise": {
+      "ok": true,
+      "detail": {
+        "events": 9
+      }
+    },
+    "events_carry_the_contract_fields_and_nothing_else": {
+      "ok": true,
+      "detail": {
+        "shapes": [
+          "assignmentKey,attSeconds,eventId,exerciseKey,hsrcCount,studentKey,timestamp"
+        ],
+        "expected": "assignmentKey,attSeconds,eventId,exerciseKey,hsrcCount,studentKey,timestamp"
+      }
+    },
+    "no_pii_in_any_event": {
+      "ok": true,
+      "detail": {
+        "checkedFor": [
+          "@",
+          "נועה פרץ",
+          "the exercise prompt"
+        ],
+        "hits": []
+      }
+    },
+    "a_replayed_beat_id_is_refused_by_the_log": {
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "attSecondsStillIs": 15
+      }
+    },
+    "no_console_errors": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "timestamp": "2026-11-25T12:17:24.408Z",
+  "fixture": {
+    "moduleKey": "2qu8WOTJ2G8FFcABgA7H",
+    "exerciseKey": "5yvPs0WUmKzc6aKlj7ex",
+    "assignmentKey": "0TbitEF4opCA8Yt3oSR1",
+    "title": "זמן פעיל על משימה mww39hi0"
+  },
+  "telemetryBefore": 1,
+  "session": {
+    "wallClockSeconds": 251,
+    "events": 9,
+    "queueAtEnd": 0
+  },
+  "accrual": {
+    "attSecondsTotal": 135,
+    "wallClockSeconds": 251,
+    "excludedSeconds": 116,
+    "ratio": 0.538
+  },
+  "gaps": {
+    "seconds": [
+      15,
+      15,
+      15,
+      105,
+      15,
+      15,
+      15,
+      15
+    ],
+    "widest": 105,
+    "cutoff": 90
+  },
+  "offlineNoise": {
+    "count": 19,
+    "sample": [
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ]
+  },
+  "consoleErrors": [],
+  "sampleEvents": [
+    {
+      "docId": "s01__mww39iszk4y7rq__1",
+      "eventId": "s01__mww39iszk4y7rq__1",
+      "studentKey": "s01",
+      "exerciseKey": "5yvPs0WUmKzc6aKlj7ex",
+      "assignmentKey": "0TbitEF4opCA8Yt3oSR1",
+      "attSeconds": 15,
+      "hsrcCount": 0,
+      "timestamp": "2026-11-25T12:17:55.620Z"
+    },
+    {
+      "docId": "s01__mww39iszk4y7rq__2",
+      "eventId": "s01__mww39iszk4y7rq__2",
+      "studentKey": "s01",
+      "exerciseKey": "5yvPs0WUmKzc6aKlj7ex",
+      "assignmentKey": "0TbitEF4opCA8Yt3oSR1",
+      "attSeconds": 15,
+      "hsrcCount": 0,
+      "timestamp": "2026-11-25T12:18:10.620Z"
+    },
+    {
+      "docId": "s01__mww39iszk4y7rq__3",
+      "eventId": "s01__mww39iszk4y7rq__3",
+      "studentKey": "s01",
+      "exerciseKey": "5yvPs0WUmKzc6aKlj7ex",
+      "assignmentKey": "0TbitEF4opCA8Yt3oSR1",
+      "attSeconds": 15,
+      "hsrcCount": 0,
+      "timestamp": "2026-11-25T12:18:25.620Z"
+    }
+  ],
+  "cleanedUp": 13,
+  "ok": true,
+  "failures": []
+}
