@@ -14,6 +14,23 @@ path for the BERTScore, ROUGE and BLEU targets.
 Q9 (Phase 5) - Deployment target. Local demo only, or deployed (for example
 Vercel plus Cloud Run)? Affects the NFR6 uptime measurement methodology.
 
+Q14 (found in Step 4.4, blocks nothing in Phase 4, affects FR8 and the
+pilot) - Answer text has no server side home. The book Fig 4 schema has no
+collection for what a student writes, and BUILD_GUIDE Step 4.4 asks for
+localStorage buffering, so the workspace keeps the draft on the student's own
+device and a submission is recorded as the progress advance alone (D21).
+Three consequences worth a decision rather than a silence. A teacher can see
+that a student submitted an exercise but not what they wrote, so there is no
+grading and no reading of student work anywhere in the product. The Phase 5
+CAR and behavioural figures are unaffected, since they are computed from
+telemetry, progress and the pre and post tests, but anything the pilot wants
+to say about answer quality would have no data behind it. And a student who
+moves to another device loses their drafts, which is acceptable for a
+classroom pilot and would not be for a real deployment. Resolving this means
+either accepting it for Phase B and saying so in the book, or adding a
+studentAnswers collection with its own rules, which is a change to the frozen
+Phase 2 contract and needs to be asked for, not assumed.
+
 Q10, Q11 and Q12 are resolved, see docs/DECISIONS.md D13, D14 and D12.
 D13 (the NFR2 re-scope) was accepted on 2026-11-19. It still changes a
 requirement set in the approved Phase A book, so the deviation and its

@@ -163,3 +163,43 @@ near zero and be discarded, so a real edit would teach the memory bank
 nothing. Appends and deletions are not filed at all, since a pair with one
 empty side is not a preference and its distance would be meaningless.
 
+
+## Step 4.4 post freeze notes (student surface)
+
+No endpoint was added or changed, so `docs/openapi.phase2.json` is untouched.
+The student surface is entirely Firestore reads plus one write, which is what
+the denormalized audience design above was for.
+
+Four client queries carry the student surface, and each is shaped so the
+security rules can prove it from its filters alone. Dropping any one filter
+turns the read into a permission denied error rather than a larger result:
+
+- `assignments` where `assignedTo` array-contains the uid and `status` is
+  `active`, ordered by `publishedAt` descending. Needs the
+  `assignments(assignedTo contains, status, publishedAt desc)` index.
+- `curriculumModules` where `assignedStudentKeys` array-contains the uid.
+  Single field, no composite index. This is the join partner of the
+  assignments query, so a card renders complete rather than waiting on a
+  `getDoc` per row.
+- `exercises` where `assignedStudentKeys` array-contains the uid and
+  `moduleKey` equals the module, ordered by `order`. Needs the
+  `exercises(assignedStudentKeys contains, moduleKey, order)` index. The
+  audience filter is not redundant with the module filter, it is the clause
+  that makes the list provable.
+- `studentProgress` where `studentKey` equals the uid. Single field.
+
+`studentProgress` documents have a derived id, `assignmentKey__studentKey`
+(D21). The id is a convenience, not an authority: the rules gate on the
+`studentKey` field inside the document, so a student cannot write someone
+else's progress by naming their document. `firebase/rules.test.ts` covers
+that, including the attempt to rewrite an own document onto another
+`studentKey`, and that nobody may delete progress.
+
+`StudentProgress.currentExerciseOrder` counts submitted exercises. It is not
+a cursor for the exercise on screen, and a reader in Phase 5 should treat it
+as "how many were sent", which is also why it is safe to merge a replayed
+offline write onto it.
+
+Answer text is not part of the contract because it never leaves the device
+(D21, Q14). `startedAt` is stamped when the student opens the workspace, not
+when they first submit.

@@ -785,3 +785,109 @@ the harness learned to record the request method, so it has no
 `generation_status` field, while the timeout record does. Its 200 is
 visible in that record's `generation_responses` list instead. The run was
 not repeated purely to even out a field name.
+
+## Step 4.4 evidence, student dashboard and workspace (2026-11-25)
+
+Gate status: MET. Evidence in
+`evaluation/results/dev_runs/student_workspace_demo.json`, 25 checks, all
+passing. The acceptance asks for a two browser demo and for an offline
+answer to survive a reload, and both are in that file.
+
+### The bug the acceptance run found, and why the unit tests did not
+
+`listenToProgress` was written as a document listener on the derived id
+`assignmentKey__studentKey`. It made the workspace unusable on a student's
+first visit to any assignment, and three cheaper checks had already passed
+over it: it typechecks, it lints, and the nine security rules tests added
+for `studentProgress` in this same step all pass.
+
+The rule is
+
+    allow read: if isTeacher() || (isStudent() && resource.data.studentKey == request.auth.uid)
+
+and for a document that does not exist `resource` is null, so
+`resource.data` is a null dereference and the read is refused rather than
+answered with "no such document". Measured directly against the emulator
+with a real student token rather than inferred:
+
+| Read | Result |
+|---|---|
+| `GET studentProgress/no-such-doc__s01` | `403 PERMISSION_DENIED`, `evaluation error at L67:22 for 'get' @ L67, Null value error` |
+| same data via a query on `studentKey` and `assignmentKey` | allowed, empty result |
+
+A student opening a unit for the first time is exactly the missing document
+case, so the listener reported permission denied, the page fell into its
+forbidden state, and the effect that creates the progress document never
+ran because it waits for the listener to report null. The dashboard was
+unaffected throughout, because `listenToMyProgress` was already a query.
+
+The rules tests missed it because every one of them read a progress
+document that the fixture had already created. The test that now pins it
+asserts both halves, that the get is refused and that the query is not, so
+nobody can quietly simplify the client back to a get. A list is evaluated
+against the query rather than against a document, which is the whole
+reason the two reads differ for the same data and the same caller.
+
+Fixed by making the read a query of one document. Writes still address the
+document by its derived id, which is where idempotence is needed for the
+offline replay (D21).
+
+### Two harness mistakes worth recording, since neither was a product fault
+
+A Firestore REST `PATCH` without an `updateMask` replaces the whole
+document. The fixture wrote the module, then added its lessons in a second
+PATCH, which left the module holding nothing but `lessons`. The review
+screen then threw on `moduleDoc.weeklySequence.length` and rendered
+nothing. The screen is reached only through the product in normal use and
+the backend always writes that field, so this is a fixture bug, not a
+defect, but it does show the review screen has no guard there. Worth a
+look in Step 5.1.
+
+Firebase Auth persists its session in IndexedDB per origin and syncs it
+across tabs of one browser profile. Running the two roles as two tabs meant
+the teacher's sign in replaced the student's session, `ProtectedRoute`
+redirected the student page away, and the live card could never arrive,
+with the published assignment correct in Firestore and not one console
+error anywhere. The demo now uses two isolated browser contexts, which is
+also a more honest reading of "two browser demo" than two tabs was. The run
+records the student's path and whether the dashboard was still mounted at
+the moment of the publish, so a regression here reports itself instead of
+looking like a broken listener.
+
+### What the run shows
+
+| Claim | Evidence in the file |
+|---|---|
+| FR9, NFR3, a publish reaches the student live | teacher publishes through the real Review Dashboard, card appears with no reload, `href` points at the workspace |
+| FR10 ordering and progressive disclosure | first exercise in `order`, 0 of 3 scaffold steps rendered initially, 1 then 2 after two requests |
+| R6 answer protection through the UI | a canary planted in every `exerciseSolutions` answer and hint is absent from the DOM and from all 25 response bodies the student's page received |
+| FR10 gating | next disabled, with the reason shown, until an answer is sent |
+| NFR7 | draft on disk while `navigator.onLine` is false, queue holding order 2, Hebrew pending banner, the queued write reaching Firestore on reconnect, and the answer still in the box after a reload |
+| FR13 | `currentExerciseOrder` 3, `isCompleted` true, server stamped `completedAt`, completion message shown |
+| R1 | the progress screen states that gains come from the pre and post tests rather than showing a number |
+
+The 10 `net::ERR_INTERNET_DISCONNECTED` console errors from the deliberate
+disconnect are counted separately as `offlineNoise` rather than filtered
+away, so the file says how many there were and why they are not defects.
+
+### A caveat about the rig, not the product
+
+`next build` cannot complete on this machine. It compiles successfully and
+then fails twice with `ETIMEDOUT: connection timed out, read` out of
+`readFileSync`, once loading the ESLint parser and once collecting page
+data. The disk is local APFS with 137GB free, `node_modules` holds no
+cloud placeholder files, and there is no security software installed, so
+the cause is unidentified and is recorded as unexplained rather than
+guessed at. It is the same fault behind the rest of this machine's
+behaviour: pandas taking 83s to import, `pip show` over three minutes, and
+the rules suite spending 385s collecting one test file whose tests then run
+in 9s.
+
+Consequences, stated rather than worked around. The run was served by
+`next dev` with every route requested once first, since a cold route
+compiles on its first request and that time would land inside the browser's
+navigation timeout. The server is recorded in the evidence file. ESLint did
+not run in this step, so `next lint` is still owed on a machine that can
+finish it, and CI on Linux is the real gate. `tsc --noEmit` passes at exit
+0, and the compile step of `next build` passes, so the code is typechecked
+and it builds.
