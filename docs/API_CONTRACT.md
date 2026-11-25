@@ -203,3 +203,34 @@ offline write onto it.
 Answer text is not part of the contract because it never leaves the device
 (D21, Q14). `startedAt` is stamped when the student opens the workspace, not
 when they first submit.
+
+## Step 4.5 post freeze notes (telemetry)
+
+No contract field changed. `TelemetryEvent` is written exactly as frozen,
+and these notes say what the values mean, because two of them are not
+obvious from their types.
+
+A document is one heartbeat and not a per exercise summary.
+`attSeconds` is the active time of that one 15s interval, so it is 15 on
+every beat the client writes, and `hsrcCount` is the help clicks inside the
+same interval. A reader in Phase 5 therefore groups by `exerciseKey` and
+sums, rather than reading a single document as a total. This shape is what
+`backend/app/core/telemetry.py` already assumes: `IDLE_CUTOFF_SECONDS`
+compares the spacing of consecutive beats, which needs the beats, and
+`compute_hsr` sums `hsrcCount`, which needs per event counts (D22).
+
+`timestamp` is the client clock at the moment of the beat, in ISO form, and
+not a `serverTimestamp`. A beat buffered through an offline stretch has to
+keep the time it happened, or the gaps the idle cutoff looks for collapse to
+the moment of the reconnect. Only one student's own beats are ever compared
+with each other, so skew between devices does not matter.
+
+`eventId` equals the document id and is derived as
+`studentKey__sessionNonce__sequence`. The log is append only and a student
+cannot read it back, so a replayed beat is refused by the rules rather than
+deduplicated by the client. Nothing may read `eventId` as an ordering: the
+sequence restarts per session.
+
+The collection is written by students and read by teachers. A student cannot
+read even their own events, which is deliberate, and `firebase/rules.test.ts`
+pins it.
