@@ -146,16 +146,18 @@ export default function StudentDashboard() {
     const byModule = new Map(modules.map((m) => [m.moduleKey, m]));
     const byAssignment = new Map(progress.map((p) => [p.assignmentKey, p]));
     return (assignments ?? []).map((assignment) => {
-      const module = byModule.get(assignment.moduleKey) ?? null;
+      // Not named module: @next/next/no-assign-module-variable forbids a
+      // local of that name, because it shadows the CommonJS module object.
+      const unit = byModule.get(assignment.moduleKey) ?? null;
       const mine = byAssignment.get(assignment.assignmentId);
       return {
         assignmentKey: assignment.assignmentId,
         moduleKey: assignment.moduleKey,
-        module,
+        module: unit,
         // currentExerciseOrder counts submitted exercises, so it is the
         // progress figure as well as the resume point (Fig 4).
         submitted: mine?.currentExerciseOrder ?? 0,
-        total: module?.exerciseCount ?? 0,
+        total: unit?.exerciseCount ?? 0,
         isCompleted: Boolean(mine?.isCompleted),
         started: Boolean(mine),
       };
