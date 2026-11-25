@@ -31,6 +31,43 @@ either accepting it for Phase B and saying so in the book, or adding a
 studentAnswers collection with its own rules, which is a change to the frozen
 Phase 2 contract and needs to be asked for, not assumed.
 
+Q15 (found while reviewing open items after Step 4.4, blocks nothing in
+code, affects FR2 and Phase 5 Step 5.5) - Standards corpus validation. All
+three snapshots under backend/app/agents/standards/il_moe carry
+draft_pending_validation true at version 0.2.0-draft: math with 11 entries,
+science with 9, history with 8. BUILD_GUIDE Step 3.3 names this as a pre-task
+and says outright that the agent drafts the entries and the team validates
+them against the source documents before merge. The drafting happened, the
+validation did not. So the question is who checks those 28 entries against
+the MOE curriculum documents, which editions, and by when. The work is
+smaller than it sounds, because every entry already carries its Hebrew
+standard text and a citation to a document and a chapter, so this is
+verification rather than authorship.
+
+Four consequences. First, the Intake Agent may only reference IDs that exist
+in the grade slice it is given, so every unit's standards mapping inherits
+whatever the snapshot says, and a mis-stated standard or an invented chapter
+citation propagates into every unit generated for that grade and domain.
+Nothing downstream catches it: the Critic verifies answers and claims, not
+curriculum text. Second, Step 5.5 asks 3 subject-competent teachers per
+subject to rate Standards Alignment. A rater who knows the curriculum will
+mark a unit down for a standard the corpus stated wrongly, which scores the
+snapshot instead of the generator and confounds that rubric dimension across
+the whole panel. Validating the files first is far cheaper than explaining
+the confound in the book afterwards. Third, this is not the same flag as
+D17's reference_validated, which covers the gold reference units and belongs
+to Q8. Both corpora are drafts today and both say so: a teacher picking a
+draft subject on the Goals screen sees the notice carried by
+SubjectOption.draftCorpus, so nothing is hidden and nothing in Phase 4 is
+blocked. Fourth, a GenerationRequest whose subject has no corpus file is
+rejected with 422 before the pipeline runs, so a pilot that wants a fourth
+subject needs curation before it needs code.
+
+Resolving this means either validating the three files and clearing the flag,
+or deciding to run the pilot and Step 5.5 on a declared draft corpus and
+saying so in the book, next to the alignment numbers rather than in a
+footnote.
+
 Q10, Q11 and Q12 are resolved, see docs/DECISIONS.md D13, D14 and D12.
 D13 (the NFR2 re-scope) was accepted on 2026-11-19. It still changes a
 requirement set in the approved Phase A book, so the deviation and its
