@@ -15,19 +15,19 @@ subject type, reported per subject and overall.
 | FR6 | Semantic distance to memory bank | core/memory_bank (ingest, retrieve, cold start seed) + routes/feedback + Firestore find_nearest with the vector index in firestore.indexes.json (D3). The Review Dashboard files one record per edited field through lib/api/feedback.postTeacherEdits, not one per save, because a whole module blob would score below EDIT_SIGNIFICANCE_THRESHOLD and be discarded |
 | FR7 | Publish to distribution list | PublishModal + lib/firebase/review.publishModule. One batched write creates the assignment and denormalizes assignedStudentKeys onto the module and every exercise doc, which is what the security rules read (D11) |
 | FR8 | Telemetry aggregation + dashboards | routes/analytics + core/telemetry + AnalyticsDashboard |
-| FR9 | Browse/select/launch programs | app/student/dashboard + listenToAssignments |
-| FR10 | Workspace + scaffolding | workspace page + ExerciseCard + ScaffoldingSteps |
+| FR9 | Browse/select/launch programs | app/student/dashboard joining three listeners, lib/firebase/firestore.listenToAssignments, listenToAssignedModules and listenToMyProgress, so a publish from the teacher's browser renders a complete card with no reload and no fetch per row (D21). Needs the assignments(assignedTo contains, status, publishedAt desc) index |
+| FR10 | Workspace + scaffolding | app/student/workspace/[assignmentId] + ExerciseCard + ScaffoldingSteps, which discloses one step per request rather than the whole breakdown. Exercises come from lib/firebase/firestore.listenToModuleExercises, which needs the exercises(assignedStudentKeys contains, moduleKey, order) index. The Fig 4 state machine is one number, currentExerciseOrder, written by upsertProgress to a derived document id (D21) |
 | FR11 | Socratic bot, no answers | agents/tutoring/socratic_agent + answer_leak guard + question_generator ladder + SocraticBot + adversarial leak tests + exerciseSolutions split (D11, firestore.rules + rules.test.ts) |
 | FR12 | Affective state detection | tutoring/adaptive_strategy (documented heuristics over ATT/HSR/idle) + lib/firebase/telemetry |
-| FR13 | Feedback + progress history | ProgressSummary + compute_ngs |
+| FR13 | Feedback + progress history | ProgressSummary, used twice: the completion message and submitted count in the workspace, and the per assignment history on the student dashboard (the View History use case). It shows no learning gain, by design, because a gain needs the pilot pre and post tests (R1). compute_ngs computes that gain in Phase 5, Step 5.6 |
 | NFR1 | UI < 2s | Next.js SSR/CSR split; design tokens and self hosted fonts in tailwind.config.ts plus styles/globals.css (no third party font request, no swap shift); Lighthouse proxy on the shells (Step 4.1), full check in Phase 5 |
 | NFR2a | Tutor turn <= 15s | tutoring/socratic_agent deadline + settings.tutor_turn_timeout_seconds (D13) |
 | NFR2b | Generation <= 900s | orchestrator budget + latency field + routes/generation 504 mapping + scripts/dev_latency_runs (DEV p50/p95 evidence) (D13) |
-| NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere |
+| NFR3 | 500ms sync | Firestore onSnapshot listeners everywhere, including every read on the student surface (lib/firebase/firestore), nothing polls. Verified live teacher to student in evaluation/results/dev_runs/student_workspace_demo.json |
 | NFR4 | RBAC | firestore.rules + rules.test.ts + api/deps + ProtectedRoute |
 | NFR5 | Telemetry anonymization | telemetryEvents keys-only design |
 | NFR6 | 99.5% uptime | /healthz + load-test monitoring (Phase 5) |
-| NFR7 | Graceful degradation | localStorage buffering + 504 handling |
+| NFR7 | Graceful degradation | lib/student/answerBuffer buffers the answer draft on every change and keeps a durable queue of unacknowledged submissions, because the Firestore SDK retry queue lives in memory and a reload while offline loses it (D21). Plus the Goals screen 504 handling |
 | D5, R10 | Hebrew RTL UI | app/layout.tsx (lang he, dir rtl, Heebo and Assistant via next/font) + AppShell role themes + logical property audit (Step 4.1) |
 | NFR8 | Loading indicators | LoadingIndicator staged over the six orchestrator stages, estimates taken from the measured DEV medians, with a regeneration hold state (D18) + SSE streaming |
 
@@ -44,7 +44,7 @@ subject type, reported per subject and overall.
 | Student | Browse and Select Enrichment Program | FR9 | app/student/dashboard |
 | Student | Solve Enrichment Problems (include: Browse and Select) | FR10, FR13 | app/student/workspace/[assignmentId] |
 | Student | Interact with Teachable Agent (extend of Solve) | FR11, FR12 | SocraticBot, POST /api/tutor/turn |
-| Student | View History | FR13 | ProgressSummary |
+| Student | View History | FR13 | ProgressSummary on app/student/dashboard |
 
 Internal automation intentionally absent from Fig 1 but present as FRs:
 generation pipeline (FR2), agentic self correction (FR3), algorithmic scoring
